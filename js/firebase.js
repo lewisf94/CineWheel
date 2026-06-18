@@ -30,25 +30,24 @@ import {
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
-
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
+// Your web app's Firebase configuration.
 const firebaseConfig = {
   apiKey: "AIzaSyDzN713jEcl5qKB7vsj9z0fLrda7v8TzQQ",
   authDomain: "cinewheel-79636.firebaseapp.com",
   projectId: "cinewheel-79636",
   storageBucket: "cinewheel-79636.firebasestorage.app",
   messagingSenderId: "456572534465",
-  appId: "1:456572534465:web:988135022809e23e771e40"
+  appId: "1:456572534465:web:988135022809e23e771e40",
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// True once real values (not the placeholders) are filled in above.
+export const isConfigured =
+  !!firebaseConfig.apiKey &&
+  !/REPLACE_ME|YOUR_API_KEY/i.test(firebaseConfig.apiKey) &&
+  !!firebaseConfig.projectId;
 
+// Only initialise when configured, so an unconfigured copy shows the setup
+// screen instead of throwing at import time.
 let app, auth, db;
 if (isConfigured) {
   app = initializeApp(firebaseConfig);
