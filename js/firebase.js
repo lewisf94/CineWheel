@@ -30,22 +30,24 @@ import {
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  👇  PASTE YOUR FIREBASE CONFIG HERE  (README.md → step 2)             ║
-// ╚══════════════════════════════════════════════════════════════════════╝
+
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "REPLACE_ME",
-  authDomain: "REPLACE_ME.firebaseapp.com",
-  projectId: "REPLACE_ME",
-  storageBucket: "REPLACE_ME.appspot.com",
-  messagingSenderId: "REPLACE_ME",
-  appId: "REPLACE_ME",
+  apiKey: "AIzaSyDzN713jEcl5qKB7vsj9z0fLrda7v8TzQQ",
+  authDomain: "cinewheel-79636.firebaseapp.com",
+  projectId: "cinewheel-79636",
+  storageBucket: "cinewheel-79636.firebasestorage.app",
+  messagingSenderId: "456572534465",
+  appId: "1:456572534465:web:988135022809e23e771e40"
 };
 
-// True only once every REPLACE_ME above has been swapped for a real value.
-export const isConfigured = !Object.values(firebaseConfig).some((v) =>
-  String(v).includes("REPLACE_ME")
-);
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
 let app, auth, db;
 if (isConfigured) {
