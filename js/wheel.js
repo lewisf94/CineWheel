@@ -133,7 +133,7 @@ export function renderIdleWheel(canvas, movies) {
   const size = canvas.width;
   if (!movies.length) {
     ctx.clearRect(0, 0, size, size);
-    ctx.fillStyle = "rgba(255,255,255,0.06)";
+    ctx.fillStyle = "rgba(128,128,128,0.14)";
     ctx.beginPath();
     ctx.arc(size / 2, size / 2, size / 2 - 8, 0, 2 * Math.PI);
     ctx.fill();

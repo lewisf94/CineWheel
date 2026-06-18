@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="noir">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#1a1326" />
+  <meta name="theme-color" content="#0d0d10" />
   <title>🎬 CineWheel — Movie Night Wheel</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>" />
   <link rel="stylesheet" href="styles.css" />
@@ -19,6 +19,7 @@
     </div>
     <div class="topbar-right">
       <button id="who-am-i" class="chip" title="Edit your name">👤 Me</button>
+      <button id="theme-btn" class="icon-btn" title="Change theme">🎨</button>
       <button id="mute-btn" class="icon-btn" title="Mute / unmute">🔊</button>
       <button id="leave-btn" class="chip hidden">Leave</button>
     </div>
@@ -94,6 +95,7 @@
     </div>
   </div>
 
+  <script type="module" src="js/theme.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
