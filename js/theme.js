@@ -6,11 +6,13 @@
 // ============================================================================
 
 const THEMES = [
-  { id: "cinema",  name: "Cinema",         bg: "#0c0a0b", accent: "#e5b567" },
-  { id: "minimal", name: "Minimal",        bg: "#ffffff", accent: "#16171a" },
-  { id: "claude",  name: "Claude",         bg: "#f0eee6", accent: "#c96442" },
-  { id: "web1",    name: "Early Internet", bg: "#c3c7cb", accent: "#0000cc" },
-  { id: "synth",   name: "Synthwave",      bg: "#0e0a1f", accent: "#ff4fd8" },
+  { id: "cinema",   name: "Cinema",         bg: "#0c0a0b", accent: "#e5b567" },
+  { id: "a24",      name: "A24",            bg: "#ffffff", accent: "#0a0a0a" },
+  { id: "festival", name: "Festival Print", bg: "#ece2cd", accent: "#c2482e" },
+  { id: "minimal",  name: "Minimal",        bg: "#ffffff", accent: "#16171a" },
+  { id: "claude",   name: "Claude",         bg: "#f0eee6", accent: "#c96442" },
+  { id: "web1",     name: "Early Internet", bg: "#c3c7cb", accent: "#0000cc" },
+  { id: "synth",    name: "Synthwave",      bg: "#0e0a1f", accent: "#ff4fd8" },
 ];
 const KEY = "cinewheel_theme";
 const DEFAULT = "cinema";

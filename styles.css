@@ -328,6 +328,61 @@ textarea { resize: vertical; min-height: 70px; }
 [data-theme="synth"] .tab.active { color: #fff; text-shadow: 0 0 10px rgba(255, 79, 216, 0.55); }
 [data-theme="synth"] .deadline-pill, [data-theme="synth"] .turn-chip.current { box-shadow: 0 0 10px rgba(255, 79, 216, 0.35); }
 
+/* 6. A24 — stark editorial black & white, grotesque, uppercase, hairline rules */
+[data-theme="a24"] {
+  --bg: #ffffff; --bg-soft: #f4f4f4; --panel: #ffffff; --panel-2: #f4f4f4;
+  --line: #111111; --line-strong: #000000; --text: #0a0a0a; --muted: #6b6b6b;
+  --faint: #9a9a9a; --accent: #0a0a0a; --accent-hi: #000000; --accent-ink: #ffffff;
+  --danger: #c0241c; --star-empty: #d6d6d6; --topbar-bg: rgba(255, 255, 255, 0.95);
+  --radius: 0px;
+  --serif: "Archivo", system-ui, sans-serif;
+  --sans: "Archivo", system-ui, sans-serif;
+}
+[data-theme="a24"] body { background: var(--bg); }
+[data-theme="a24"] h1, [data-theme="a24"] h2, [data-theme="a24"] h3,
+[data-theme="a24"] .brand, [data-theme="a24"] .film-title { text-transform: uppercase; font-weight: 800; letter-spacing: -0.01em; }
+[data-theme="a24"] .film-banner, [data-theme="a24"] .sealed-banner, [data-theme="a24"] .tab,
+[data-theme="a24"] .tile-label, [data-theme="a24"] .sup-label, [data-theme="a24"] .reset-progress { text-transform: uppercase; letter-spacing: 0.14em; }
+[data-theme="a24"] .card, [data-theme="a24"] .tile, [data-theme="a24"] .superlative,
+[data-theme="a24"] .modal-box, [data-theme="a24"] .reset-box { border: 1px solid var(--line); }
+[data-theme="a24"] .btn { border: 1px solid #111; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
+[data-theme="a24"] .btn:hover { color: #000; border-color: #000; }
+[data-theme="a24"] .btn.primary { background: #0a0a0a; color: #fff; border-color: #0a0a0a; }
+[data-theme="a24"] .btn.primary:hover { background: #000; color: #fff; }
+[data-theme="a24"] a, [data-theme="a24"] .text-link { color: #0a0a0a; text-decoration: underline; }
+[data-theme="a24"] .tabs { border-bottom: 1px solid #111; }
+[data-theme="a24"] .tab.active { color: #000; border-bottom: 2px solid #000; }
+
+/* 7. Festival Print — warm paper with grain, condensed headlines, spot ink */
+[data-theme="festival"] {
+  --bg: #ece2cd; --bg-soft: #f3ebd9; --panel: #f3ebd9; --panel-2: #e7dcc2;
+  --line: #c8b994; --line-strong: #211c14; --text: #211c14; --muted: #6b6048;
+  --faint: #9a8c6e; --accent: #c2482e; --accent-hi: #d4543a; --accent-ink: #f6efdd;
+  --danger: #a8321f; --star-empty: #cabb96; --topbar-bg: rgba(236, 226, 205, 0.95);
+  --radius: 0px;
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: Georgia, "Times New Roman", serif;
+}
+[data-theme="festival"] body { background: var(--bg); }
+[data-theme="festival"] body::after {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 2; opacity: 0.09;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+[data-theme="festival"] h1, [data-theme="festival"] h2, [data-theme="festival"] h3,
+[data-theme="festival"] .brand, [data-theme="festival"] .film-title {
+  font-family: "Oswald", system-ui, sans-serif; text-transform: uppercase; font-weight: 600; letter-spacing: 0.02em;
+}
+[data-theme="festival"] .film-banner, [data-theme="festival"] .sealed-banner, [data-theme="festival"] .tab,
+[data-theme="festival"] .sup-label, [data-theme="festival"] .tile-label, [data-theme="festival"] .reset-progress {
+  font-family: "Oswald", system-ui, sans-serif; text-transform: uppercase; letter-spacing: 0.14em;
+}
+[data-theme="festival"] .card, [data-theme="festival"] .tile, [data-theme="festival"] .superlative,
+[data-theme="festival"] .modal-box, [data-theme="festival"] .reset-box { border: 1px solid var(--line-strong); }
+[data-theme="festival"] .btn { border: 1px solid var(--line-strong); }
+[data-theme="festival"] .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+[data-theme="festival"] .btn.primary:hover { background: var(--accent-hi); border-color: var(--accent-hi); color: var(--accent-ink); }
+[data-theme="festival"] .deadline-pill { border-color: var(--accent); color: var(--accent); }
+
 /* ---- theme picker popover ---- */
 .theme-pop {
   position: fixed; z-index: 120; min-width: 204px;
