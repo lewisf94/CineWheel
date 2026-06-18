@@ -45,7 +45,7 @@ export async function createGroup(groupName) {
   if (!code) throw new Error("Couldn't generate a free code — please try again.");
 
   await setDoc(doc(db, "groups", code), {
-    name: (groupName || "").trim() || "Movie Club",
+    name: (groupName || "").trim() || "Film Club",
     createdAt: serverTimestamp(),
     createdByName: name,
     memberOrder: [memberId],
@@ -99,5 +99,5 @@ export function currentSpinnerId(group) {
 
 // Update this group's display name.
 export async function renameGroup(code, newName) {
-  await updateDoc(doc(db, "groups", code), { name: (newName || "").trim() || "Movie Club" });
+  await updateDoc(doc(db, "groups", code), { name: (newName || "").trim() || "Film Club" });
 }

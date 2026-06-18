@@ -1,8 +1,9 @@
-# 🎬 CineWheel
+# CineWheel
 
-A movie-night wheel for groups of friends. Add films to a wheel, take turns each
+A film-club wheel for groups of friends. Add films to a wheel, take turns each
 week spinning to pick what to watch, set a watch-by deadline, then rate (in
-half-stars) and review what you watched — with fun stats along the way.
+half-stars) and review what you watched — reviews stay sealed until the whole
+club is in, with stats along the way.
 
 - **No sign-up** — people just enter a name.
 - **Multiple groups** — create a group, share its 5-letter code (Kahoot-style),
@@ -14,15 +15,17 @@ half-stars) and review what you watched — with fun stats along the way.
 
 ## How it works
 
-1. **Create a group** (you get a share code) or **join** with a friend's code.
-2. **Add movies** to the wheel — each is tagged with who added it.
+1. **Start a club** (you get a share code) or **join** with a friend's code.
+2. **Add films** to the wheel — each is tagged with who added it.
 3. The person **whose turn it is** (turn order = the order people joined) spins
    the wheel. Everyone watching sees the same spin.
 4. The result becomes the **Film of the Week** with a **7-day deadline**
    (the spinner can change the date).
-5. Anyone can **mark it watched** — that passes the turn to the next person.
-6. Watched films move to the **Ratings** tab, where everyone scores them
-   0.5–5 ★ and leaves a review.
+5. Each member **marks it watched** and leaves a **private** half-star rating
+   and review — nobody sees anyone else's review yet.
+6. Once **everyone has watched and rated**, all reviews **reveal at once**, the
+   film moves to the **Ratings** tab, the turn passes, and the next spin
+   unlocks. (The spinner can wrap up early if someone's away.)
 7. The **Stats** tab shows averages, most generous / harshest critic, top &
    most divisive films, and more.
 
@@ -88,9 +91,9 @@ shared data. You only do this once.
 3. Under **Build and deployment → Source**, choose **Deploy from a branch**.
 4. Pick branch **`main`**, folder **`/ (root)`**, and **Save**.
 5. After a minute your site is live at:
-   **`https://lewisf94.github.io/cinewheel/`**
+   **`https://lewisf94.github.io/CineWheel/`**
 
-Share that link (or the in-app group code) with your friends and you're set. 🍿
+Share that link (or the in-app club code) with your friends and you're set.
 
 ---
 

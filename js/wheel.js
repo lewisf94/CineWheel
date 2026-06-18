@@ -7,10 +7,11 @@
 //  always lands dead-centre on the chosen segment.
 // ============================================================================
 
+// A curated, muted palette in keeping with the editorial look.
 const PALETTE = [
-  "#e63946", "#f4a261", "#e9c46a", "#2a9d8f", "#457b9d",
-  "#7209b7", "#f72585", "#3a86ff", "#06d6a0", "#ff9f1c",
-  "#ef476f", "#118ab2", "#8338ec", "#fb5607", "#43aa8b",
+  "#C7A36B", "#8C5A4A", "#5A6E5A", "#46566B", "#7A5A6E",
+  "#A9743F", "#6E6E58", "#5E7A72", "#9A5A4A", "#737A8C",
+  "#A98C5A", "#566A5E", "#84614F", "#6B5E72", "#88826F",
 ];
 
 // ---- audio ----------------------------------------------------------------
@@ -96,7 +97,7 @@ function drawWheel(ctx, size, segments, rotation, highlightIndex) {
     ctx.lineWidth = 3;
     ctx.strokeStyle = "rgba(0,0,0,0.45)";
     ctx.strokeText(label, r - 14, 0);
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = "#ECE7DE";
     ctx.fillText(label, r - 14, 0);
     ctx.restore();
   }
@@ -104,9 +105,9 @@ function drawWheel(ctx, size, segments, rotation, highlightIndex) {
   // hub
   ctx.beginPath();
   ctx.arc(cx, cy, 26, 0, 2 * Math.PI);
-  ctx.fillStyle = "#1a1326";
+  ctx.fillStyle = "#14151A";
   ctx.fill();
-  ctx.strokeStyle = "#fff";
+  ctx.strokeStyle = "#ECE7DE";
   ctx.lineWidth = 3;
   ctx.stroke();
 }
@@ -114,8 +115,8 @@ function drawWheel(ctx, size, segments, rotation, highlightIndex) {
 function drawPointer(ctx, size) {
   const cx = size / 2;
   ctx.save();
-  ctx.fillStyle = "#ffd166";
-  ctx.strokeStyle = "#1a1326";
+  ctx.fillStyle = "#C7A36B";
+  ctx.strokeStyle = "#14151A";
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(cx - 18, 0);
@@ -137,10 +138,10 @@ export function renderIdleWheel(canvas, movies) {
     ctx.beginPath();
     ctx.arc(size / 2, size / 2, size / 2 - 8, 0, 2 * Math.PI);
     ctx.fill();
-    ctx.fillStyle = "#9b91ad";
+    ctx.fillStyle = "#8C887F";
     ctx.font = "16px system-ui, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("Add movies to fill the wheel", size / 2, size / 2);
+    ctx.fillText("Add films to fill the wheel", size / 2, size / 2);
     return;
   }
   drawWheel(ctx, size, movies.map((m) => ({ id: m.id, title: m.title })), 0, -1);
@@ -165,7 +166,7 @@ function playSpinOverlay(spin, onDone) {
     <div class="spin-stage">
       <div class="spin-pointer-label">spinning the wheel…</div>
       <canvas class="spin-canvas" width="520" height="520"></canvas>
-      <div class="spin-caption">🎲</div>
+      <div class="spin-caption"></div>
     </div>`;
   document.body.appendChild(overlay);
 
@@ -208,7 +209,7 @@ function playSpinOverlay(spin, onDone) {
   function finish() {
     ding();
     navigator.vibrate?.([20, 40, 90]);
-    caption.textContent = "🎬 " + (segments[winnerIndex].title || "");
+    caption.textContent = segments[winnerIndex].title || "";
     caption.classList.add("win");
     burstConfetti();
     setTimeout(() => {

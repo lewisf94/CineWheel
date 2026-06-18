@@ -1,5 +1,5 @@
 // ============================================================================
-//  Movies: the wheel list, the spin result, and the watched flow
+//  Films: the wheel list, the spin result, and the watch + finish flow
 // ============================================================================
 
 import {
@@ -11,6 +11,7 @@ import {
   deleteDoc,
   serverTimestamp,
   runTransaction,
+  arrayUnion,
   Timestamp,
 } from "./firebase.js";
 import { getMemberId, getName } from "./session.js";
@@ -30,7 +31,7 @@ export async function addMovie(code, title) {
   });
 }
 
-// Remove a not-yet-watched movie from the wheel.
+// Remove a not-yet-picked film from the wheel.
 export async function removeMovie(code, movieId) {
   await deleteDoc(doc(db, "groups", code, "movies", movieId));
 }
@@ -38,8 +39,8 @@ export async function removeMovie(code, movieId) {
 // Record the result of a spin. The wheel `segments` + `winnerIndex` are stored
 // in lastSpin so every connected browser animates the exact same wheel, even
 // though the winner immediately leaves the "wheel" status. currentFilm is the
-// authoritative film-of-the-week (set straight away so late joiners still see
-// it); lastSpin just drives the one-off animation overlay.
+// authoritative film-of-the-week; lastSpin just drives the animation overlay.
+// watchedBy starts empty and fills as each member confirms they've watched.
 export async function commitSpin(code, segments, winnerIndex, spinnerName, deadlineDate) {
   const winner = segments[winnerIndex];
   const deadline = Timestamp.fromDate(deadlineDate);
@@ -50,6 +51,7 @@ export async function commitSpin(code, segments, winnerIndex, spinnerName, deadl
     status: "current",
     pickedAt: serverTimestamp(),
     deadline,
+    watchedBy: [],
   });
   await updateDoc(doc(db, "groups", code), {
     currentFilm: {
@@ -85,13 +87,23 @@ export async function setDeadline(code, movieId, date) {
   });
 }
 
-// Mark the current film watched, clear it, and advance the turn to the next
-// person in join order — all atomically.
-export async function markWatched(code, movieId) {
+// Record that THIS member has watched the current film. Idempotent.
+export async function markWatchedAck(code, movieId, memberId) {
+  await updateDoc(doc(db, "groups", code, "movies", movieId), {
+    watchedBy: arrayUnion(memberId),
+  });
+}
+
+// Finish the round: move the film into history (which reveals everyone's
+// reviews), clear the film-of-the-week, and advance the turn to the next
+// person. Idempotent and transactional, so it's safe even if several browsers
+// trigger it at the same moment, or after it has already happened.
+export async function finalizeRound(code, movieId) {
   const groupRef = doc(db, "groups", code);
   await runTransaction(db, async (tx) => {
     const g = await tx.get(groupRef);
     const data = g.data();
+    if (!data || !data.currentFilm || data.currentFilm.movieId !== movieId) return;
     const order = data.memberOrder || [];
     const nextIndex = order.length
       ? ((data.currentSpinnerIndex || 0) + 1) % order.length

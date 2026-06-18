@@ -27,6 +27,7 @@ import {
   orderBy,
   serverTimestamp,
   runTransaction,
+  arrayUnion,
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
@@ -77,5 +78,6 @@ export {
   orderBy,
   serverTimestamp,
   runTransaction,
+  arrayUnion,
   Timestamp,
 };
