@@ -283,7 +283,6 @@ textarea { resize: vertical; min-height: 70px; }
 [data-theme="a24"] #wheel-canvas { border: 1px solid #111; }
 [data-theme="a24"] .tabs { counter-reset: a24tab; }
 [data-theme="a24"] .tab::before { counter-increment: a24tab; content: counter(a24tab, decimal-leading-zero) "\00a0\00a0"; opacity: 0.4; }
-[data-theme="a24"] .brand::after { content: "\00ae"; font-size: 0.5em; vertical-align: super; margin-left: 2px; font-weight: 400; }
 
 /* ===========================================================================
    THEME 2 — CINEMA (festival print) : a grainy printed programme. Paper, double
@@ -376,7 +375,7 @@ textarea { resize: vertical; min-height: 70px; }
   content: ""; position: absolute; top: 3px; left: 3px; right: 3px; height: 22px;
   background: linear-gradient(90deg, #000088, #1840d8);
 }
-[data-theme="strokes"] .card::after, [data-theme="strokes"] .modal-box::after, [data-theme="strokes"] .reset-box::after {
+[data-theme="strokes"] .modal-box::after, [data-theme="strokes"] .reset-box::after {
   content: "X"; position: absolute; top: 5px; right: 6px; width: 18px; height: 16px;
   background: #d4d0c8; color: #000; font-family: var(--sans); font-size: 11px; font-weight: 700;
   line-height: 14px; text-align: center; border: 1px solid; border-color: #ffffff #808080 #808080 #ffffff;
@@ -394,7 +393,6 @@ textarea { resize: vertical; min-height: 70px; }
 [data-theme="strokes"] input, [data-theme="strokes"] textarea { background: #fff; color: #111; border: 2px solid; border-color: #808080 #ffffff #ffffff #808080; }
 [data-theme="strokes"] a, [data-theme="strokes"] .text-link { color: #0000cc; text-decoration: underline; }
 [data-theme="strokes"] a:visited { color: #551a8b; }
-[data-theme="strokes"] .card.rolled { max-height: 30px; overflow: hidden; }
 /* folder tabs */
 [data-theme="strokes"] .tabs { border-bottom: 2px solid #000; gap: 3px; }
 [data-theme="strokes"] .tab {
