@@ -411,6 +411,33 @@ textarea { resize: vertical; min-height: 70px; }
 [data-theme="strokes"] .turn-chip { color: #fff; border-color: #fff; }
 [data-theme="strokes"] .turn-chip.current { background: var(--accent); border-color: #fff; color: #fff; }
 [data-theme="strokes"] .tabpane > .muted { color: #d7dcff; }
+/* Web 1.0 taskbar + Start menu (shown only in this theme) */
+#taskbar { display: none; }
+[data-theme="strokes"] #taskbar {
+  display: flex; align-items: center; gap: 8px;
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 90; height: 34px; padding: 3px 6px;
+  background: #c0c0c0; border-top: 2px solid #ffffff;
+}
+[data-theme="strokes"] .start-btn {
+  font-family: "Pixelify Sans", "Courier New", monospace; font-weight: 700; font-size: 0.85rem;
+  background: #d4d0c8; color: #000; border: 2px solid; border-color: #ffffff #808080 #808080 #ffffff;
+  padding: 4px 12px; cursor: pointer;
+}
+[data-theme="strokes"] .start-btn:active { border-color: #808080 #ffffff #ffffff #808080; }
+[data-theme="strokes"] .taskbar-clock {
+  margin-left: auto; padding: 4px 12px; font-size: 0.82rem; color: #000; font-family: "Times New Roman", Times, serif;
+  border: 2px solid; border-color: #808080 #ffffff #ffffff #808080; background: #c0c0c0;
+}
+.start-menu { display: none; }
+[data-theme="strokes"] .start-menu:not(.hidden) {
+  display: block; position: fixed; left: 6px; bottom: 38px; z-index: 95; min-width: 168px; padding: 3px;
+  background: #c0c0c0; border: 2px solid; border-color: #ffffff #808080 #808080 #ffffff; box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+}
+[data-theme="strokes"] .start-menu button {
+  display: block; width: 100%; text-align: left; background: none; border: none; cursor: pointer;
+  padding: 7px 12px; font-family: "Times New Roman", Times, serif; font-size: 0.9rem; color: #000;
+}
+[data-theme="strokes"] .start-menu button:hover { background: #000080; color: #ffffff; }
 
 /* ===========================================================================
    Mobile / responsive — sits last so it applies across every theme

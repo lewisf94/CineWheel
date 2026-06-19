@@ -151,6 +151,34 @@ function wireStaticUI() {
       if (state.code) cancelReset(state.code);
     }
   });
+
+  // Web 1.0 taskbar: a live clock and a working Start menu.
+  const clockEl = $("#taskbar-clock");
+  if (clockEl) {
+    const tick = () => { clockEl.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); };
+    tick();
+    setInterval(tick, 10000);
+  }
+  const startBtn = $("#start-btn");
+  if (startBtn) {
+    const menu = document.createElement("div");
+    menu.className = "start-menu hidden";
+    menu.innerHTML = `
+      <button data-act="theme">Change theme</button>
+      <button data-act="leave">Leave club</button>
+      <button data-act="about">About CineWheel</button>`;
+    document.body.appendChild(menu);
+    startBtn.addEventListener("click", (e) => { e.stopPropagation(); menu.classList.toggle("hidden"); });
+    document.addEventListener("click", (e) => { if (e.target !== startBtn && !menu.contains(e.target)) menu.classList.add("hidden"); });
+    menu.addEventListener("click", (e) => {
+      const act = e.target.closest("[data-act]")?.dataset.act;
+      if (!act) return;
+      menu.classList.add("hidden");
+      if (act === "theme") $("#theme-btn").click();
+      else if (act === "leave") { if (state.code) leaveGroup(); }
+      else if (act === "about") alert("CineWheel - a film-club wheel. Spin for the week's film, watch it, then rate. Built as a static site on Firebase.");
+    });
+  }
 }
 
 function updateMuteBtn() {
