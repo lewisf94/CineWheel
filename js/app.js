@@ -311,6 +311,10 @@ function teardownSubs() {
 }
 
 // ---- ordering helpers ------------------------------------------------------
+// serverTimestamp() reads back null on the writer's client until the server
+// acks the write, so we fall back to Date.now() (NOT 0) — a freshly added /
+// watched film then sorts as "newest" and holds its place instead of jumping
+// to the start when the real timestamp lands. Keep the Date.now() fallback.
 const wheelMovies = () =>
   state.movies.filter((m) => m.status === "wheel").sort((a, b) => ms(a.addedAt, Date.now()) - ms(b.addedAt, Date.now()));
 const watchedMovies = () =>

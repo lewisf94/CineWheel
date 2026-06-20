@@ -42,8 +42,9 @@ your Firebase project from here. I write the code; you deploy.
   rated", "reset needs unanimity". **[Blaze plan + functions deploy; breaks 'no build step']** — opt-in.
 - [ ] **9. Portable identity** — optional email-link sign-in linked onto the anonymous account
   (same uid; data survives a cache wipe / new device). `js/session.js` + small UI.
-- [ ] **10. serverTimestamp ordering guard** — handle null-until-server with `metadata.hasPendingWrites`
-  or a client-time fallback sort key so fresh items don't jump.
+- [x] **10. serverTimestamp ordering guard** — the wheel/history sorts already fall back to
+  `Date.now()` (not `0`) while `serverTimestamp()` is null-until-acked, so fresh items sort as
+  "newest" and don't jump when the real value lands. Locked in with a comment so it isn't regressed.
 
 ## P2 — Performance & cost
 
