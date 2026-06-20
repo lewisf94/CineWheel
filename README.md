@@ -82,6 +82,12 @@ of [`firestore.rules`](./firestore.rules) and `ARCHITECTURE.md`.
    enable it → **Save**.
    *(This signs everyone in invisibly so the rules work — there's still no login
    screen for your friends.)*
+3. *(Optional)* For the **"Save your account"** button (keep your club across
+   devices / a cleared browser), also add the **Email/Password** provider and,
+   inside it, tick **Email link (passwordless sign-in)** → **Save**. The app's
+   domain (`lewisf94.github.io`, plus `localhost` for local testing) must be in
+   **Authentication → Settings → Authorized domains** — it usually is by default.
+   Skip this and everything else still works; the button just won't send links.
 
 ### 6. Paste your config into the app
 1. Open [`js/firebase.js`](./js/firebase.js).

@@ -6,11 +6,22 @@
 //  Firestore security rules can block the open internet.
 // ============================================================================
 
-import { auth, signInAnonymously, onAuthStateChanged, isConfigured } from "./firebase.js";
+import {
+  auth,
+  signInAnonymously,
+  onAuthStateChanged,
+  isConfigured,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
+  EmailAuthProvider,
+  linkWithCredential,
+} from "./firebase.js";
 
 const MEMBER_ID_KEY = "spinema_member_id";
 const NAME_KEY = "spinema_name";
 const LAST_GROUP_KEY = "spinema_last_group";
+const EMAIL_KEY = "spinema_email_for_signin";
 
 // One-time migration: copy any legacy "cinewheel_" localStorage keys to the new
 // "spinema_" names so existing browsers keep their identity, name and last group.
@@ -45,6 +56,12 @@ export function getMemberId() {
   return id;
 }
 
+// Adopt a specific memberId (used to reclaim an existing club seat when we
+// recover our account on a new device — see joinGroup).
+export function setMemberId(id) {
+  if (id) localStorage.setItem(MEMBER_ID_KEY, id);
+}
+
 export function getName() {
   return localStorage.getItem(NAME_KEY) || "";
 }
@@ -64,7 +81,10 @@ export function setLastGroup(code) {
 
 let authPromise = null;
 
-// Resolves (once) when anonymous auth is ready. Cached so it only runs once.
+// Resolves (once) when auth is ready. Cached so it only runs once. Signs in
+// anonymously ONLY when nobody is signed in — so a persisted account (e.g. one
+// linked to an email via "Save your account") is kept instead of being replaced
+// by a fresh anonymous user on every return visit.
 export function ensureAuth() {
   if (authPromise) return authPromise;
   authPromise = new Promise((resolve, reject) => {
@@ -74,8 +94,74 @@ export function ensureAuth() {
     }
     onAuthStateChanged(auth, (user) => {
       if (user) resolve(user);
+      else signInAnonymously(auth).catch(reject);
     });
-    signInAnonymously(auth).catch(reject);
   });
   return authPromise;
+}
+
+// ---- optional portable identity (email-link sign-in) -----------------------
+// Anonymous auth is per-browser: clear your storage or switch devices and you'd
+// lose your club. Linking an email onto the anonymous account keeps the SAME
+// uid, so your membership survives — and on a new device, signing in with the
+// same email recovers that uid. Requires the Email-link provider enabled in the
+// Firebase console; entirely optional, nothing breaks if it's never used.
+
+// Has this browser's account been saved (linked to an email, not just anon)?
+export function isAccountSaved() {
+  return !!(auth && auth.currentUser && !auth.currentUser.isAnonymous);
+}
+
+export function getAccountEmail() {
+  return (auth && auth.currentUser && auth.currentUser.email) || "";
+}
+
+// Email the user a one-time sign-in link to save / restore their account.
+export async function sendAccountLink(email) {
+  email = (email || "").trim();
+  if (!email) throw new Error("Enter your email address.");
+  const last = getLastGroup();
+  const url = location.origin + location.pathname + (last ? "?g=" + encodeURIComponent(last) : "");
+  await sendSignInLinkToEmail(auth, email, { url, handleCodeInApp: true });
+  localStorage.setItem(EMAIL_KEY, email);
+}
+
+// Is the page currently loaded from one of those sign-in links?
+export function isEmailSignInLink() {
+  try {
+    return isConfigured && isSignInWithEmailLink(auth, location.href);
+  } catch (_) {
+    return false;
+  }
+}
+
+// Finish an email-link sign-in. Links onto the current anonymous account when
+// possible (keeps the uid + data); otherwise signs in as the existing account
+// (recovers the original uid). `promptForEmail` is called only if we don't have
+// the address stored (e.g. the link was opened on a different device).
+export async function completeEmailLinkSignIn(promptForEmail) {
+  if (!isEmailSignInLink()) return { completed: false };
+  let email = localStorage.getItem(EMAIL_KEY);
+  if (!email && typeof promptForEmail === "function") email = await promptForEmail();
+  if (!email) return { completed: false, needEmail: true };
+
+  const cred = EmailAuthProvider.credentialWithLink(email, location.href);
+  try {
+    if (auth.currentUser && auth.currentUser.isAnonymous) {
+      await linkWithCredential(auth.currentUser, cred); // upgrade in place
+    } else {
+      await signInWithEmailLink(auth, email, location.href);
+    }
+  } catch (e) {
+    // Email already belongs to a permanent account (linked elsewhere): just sign
+    // in as it, recovering that original uid.
+    if (e && (e.code === "auth/credential-already-in-use" || e.code === "auth/email-already-in-use")) {
+      await signInWithEmailLink(auth, email, location.href);
+    } else {
+      localStorage.removeItem(EMAIL_KEY);
+      throw e;
+    }
+  }
+  localStorage.removeItem(EMAIL_KEY);
+  return { completed: true };
 }

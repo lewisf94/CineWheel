@@ -5,6 +5,7 @@
 import { isConfigured, db, doc, collection, onSnapshot } from "./firebase.js";
 import {
   ensureAuth, getName, setName, getMemberId, getLastGroup, setLastGroup,
+  isAccountSaved, getAccountEmail, sendAccountLink, isEmailSignInLink, completeEmailLinkSignIn,
 } from "./session.js";
 import {
   createGroup, joinGroup, currentSpinnerId, normaliseCode,
@@ -81,6 +82,18 @@ async function init() {
     return;
   }
 
+  // If we arrived from an email sign-in link, finish it before anything else so
+  // the recovered uid is in place when we join (and can reclaim our seat).
+  if (isEmailSignInLink()) {
+    try {
+      await completeEmailLinkSignIn(() => window.prompt("Confirm your email to finish signing in:"));
+    } catch (e) {
+      console.error("Email-link sign-in failed:", e);
+    }
+    const g = normaliseCode(new URLSearchParams(location.search).get("g") || "");
+    history.replaceState(null, "", location.origin + location.pathname + (g ? "?g=" + g : ""));
+  }
+
   if (!getName()) await promptName();
 
   const params = new URLSearchParams(location.search);
@@ -110,6 +123,8 @@ function wireStaticUI() {
   $("#who-am-i").addEventListener("click", () => promptName());
   $("#name-save").addEventListener("click", saveName);
   $("#name-input").addEventListener("keydown", (e) => e.key === "Enter" && saveName());
+  $("#account-btn").addEventListener("click", openAccountModal);
+  $("#account-close").addEventListener("click", () => hide($("#account-modal")));
   $("#leave-btn").addEventListener("click", leaveGroup);
 
   $("#create-btn").addEventListener("click", handleCreate);
@@ -151,6 +166,8 @@ function wireStaticUI() {
     if (win.closest("#name-modal")) {
       hide($("#name-modal"));
       if (namePromiseResolve) { namePromiseResolve(); namePromiseResolve = null; }
+    } else if (win.closest("#account-modal")) {
+      hide($("#account-modal"));
     } else if (win.classList.contains("reset-box")) {
       if (state.code) cancelReset(state.code);
     }
@@ -213,6 +230,51 @@ async function saveName() {
     namePromiseResolve = null;
   }
   render();
+}
+
+// ---- account modal (optional portable identity) ----------------------------
+function openAccountModal() {
+  renderAccountBody();
+  show($("#account-modal"));
+}
+
+function renderAccountBody() {
+  const body = $("#account-body");
+  if (isAccountSaved()) {
+    body.innerHTML = `
+      <h2>Account saved</h2>
+      <p class="muted">You're signed in as <b>${esc(getAccountEmail())}</b>. Your club
+        travels with you — open the app with this email on another device, or
+        after clearing your browser, to pick up where you left off.</p>`;
+    return;
+  }
+  body.innerHTML = `
+    <h2>Save your account</h2>
+    <p class="muted">No password. We'll email you a one-time link; open it and your
+      club sticks to your account, so a new device or a cleared browser won't lose
+      it. Totally optional.</p>
+    <input id="account-email" type="email" placeholder="you@example.com" autocomplete="email" />
+    <button id="account-send" class="btn primary">Email me a sign-in link</button>
+    <p id="account-msg" class="muted small"></p>`;
+  $("#account-send").addEventListener("click", handleSendLink);
+  $("#account-email").addEventListener("keydown", (e) => e.key === "Enter" && handleSendLink());
+  $("#account-email").focus();
+}
+
+async function handleSendLink() {
+  const email = $("#account-email").value.trim();
+  const msg = $("#account-msg");
+  const btn = $("#account-send");
+  msg.textContent = "";
+  if (!email) { $("#account-email").focus(); return; }
+  btn.disabled = true;
+  try {
+    await sendAccountLink(email);
+    msg.textContent = "Sent — check your email for the sign-in link.";
+  } catch (e) {
+    msg.textContent = "Couldn't send: " + e.message;
+    btn.disabled = false;
+  }
 }
 
 // ---- routing ---------------------------------------------------------------

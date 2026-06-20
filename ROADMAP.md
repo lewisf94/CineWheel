@@ -46,8 +46,11 @@ your Firebase project from here. I write the code; you deploy.
   only the spinner spins. **OFF by default** (`useFunctions=false` in `js/firebase.js`; Functions SDK
   lazy-loaded) so the live app is unchanged until you opt in. **[Blaze + `firebase deploy --only
   functions`, flip the flag, publish `functions/firestore.rules`]** — guide in `functions/README.md`.
-- [ ] **9. Portable identity** — optional email-link sign-in linked onto the anonymous account
-  (same uid; data survives a cache wipe / new device). `js/session.js` + small UI.
+- [x] **9. Portable identity** — *built; needs the Email-link provider enabled in console* — optional
+  "Save your account" (email-link) that links onto the anonymous account in place (same uid), and on a
+  new device / cleared browser recovers that uid; `joinGroup` then reclaims your existing seat instead
+  of duplicating you. `session.js` + an Account modal. Inert until used. **[console: enable Email link
+  provider]** (README step 5).
 - [x] **10. serverTimestamp ordering guard** — the wheel/history sorts already fall back to
   `Date.now()` (not `0`) while `serverTimestamp()` is null-until-acked, so fresh items sort as
   "newest" and don't jump when the real value lands. Locked in with a comment so it isn't regressed.

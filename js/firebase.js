@@ -10,6 +10,11 @@ import {
   getAuth,
   signInAnonymously,
   onAuthStateChanged,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
+  EmailAuthProvider,
+  linkWithCredential,
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 import {
   getFirestore,
@@ -111,6 +116,11 @@ export {
   db,
   signInAnonymously,
   onAuthStateChanged,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
+  EmailAuthProvider,
+  linkWithCredential,
   collection,
   doc,
   getDoc,

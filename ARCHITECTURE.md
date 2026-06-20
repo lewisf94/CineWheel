@@ -39,6 +39,15 @@ No login/accounts: identity is a random `memberId` + display name in
 (`memberUids` on the group; `uid` on member/rating docs) so the security rules
 can lock each club to its own members.
 
+**Portable identity (optional).** Anonymous auth is per-browser, so clearing
+storage or switching devices would otherwise lose your club. The "Save your
+account" button links an **email** onto the anonymous account via a passwordless
+sign-in link — `linkWithCredential` keeps the **same uid** in place. On a new
+device, opening the same link signs you in as that account (recovering the uid),
+and `joinGroup` reclaims your existing member seat (matching `uid` → `memberId`)
+instead of creating a duplicate. Needs the Email-link provider enabled in the
+console; nothing breaks if it's never used.
+
 ## The weekly round
 
 1. The member at `currentSpinnerIndex` spins (`commitSpin`). The winner becomes

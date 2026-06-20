@@ -14,10 +14,12 @@ import {
   runTransaction,
   arrayUnion,
   writeBatch,
+  query,
+  where,
   useFunctions,
   callFunction,
 } from "./firebase.js";
-import { getMemberId, getName, getUid } from "./session.js";
+import { getMemberId, getName, getUid, setMemberId } from "./session.js";
 
 // Unambiguous alphabet — no 0/O, 1/I to avoid confusion when sharing codes.
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -72,13 +74,32 @@ export async function createGroup(groupName) {
 // Join an existing group by code. Also used to refresh your name on return.
 export async function joinGroup(rawCode) {
   const code = normaliseCode(rawCode);
-  const memberId = getMemberId();
+  let memberId = getMemberId();
   const name = getName();
   const uid = getUid();
   const groupRef = doc(db, "groups", code);
 
   const snap = await getDoc(groupRef);
   if (!snap.exists()) throw new Error("No group found with that code.");
+
+  // Portable identity: if our auth uid already belongs to this club but our
+  // local memberId isn't a known seat (e.g. we recovered our account via
+  // email-link on a new device or after a cache wipe), reclaim that existing
+  // seat instead of creating a duplicate. Normal return visits — where our
+  // memberId is already in the rotation — skip this entirely.
+  const order = snap.data().memberOrder || [];
+  if (uid && (snap.data().memberUids || []).includes(uid) && !order.includes(memberId)) {
+    try {
+      const mine = await getDocs(
+        query(collection(db, "groups", code, "members"), where("uid", "==", uid))
+      );
+      const seat = mine.docs.find((d) => d.id !== memberId);
+      if (seat) {
+        memberId = seat.id;
+        setMemberId(memberId);
+      }
+    } catch (_) { /* unreadable — proceed as new */ }
+  }
 
   // Upsert our member record (keeps name fresh on every join).
   await setDoc(
