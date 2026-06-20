@@ -22,8 +22,9 @@ your Firebase project from here. I write the code; you deploy.
   - constrain the "join" path (you may add only your own uid)
   - `performReset` now chunks deletes (≤15/batch) to stay under the rules' 20 get()/batch ceiling
   - **[console]** publish the rules — **test in the Firebase Emulator first**
-- [ ] **3. Safe rollout** — ship step 1 first so members have a uid recorded, *then* publish step 2
-  (so existing members aren't locked out). For this test app: re-join once after deploy.
+- [~] **3. Safe rollout** — *client shipped (steps 1 & the rules file are on `main`); publishing the
+  rules is your console step.* Order: the uid-recording client is already live, so now publish
+  `firestore.rules` in the console and have everyone re-join once. Locked-out members just re-join.
 - [ ] **4. [console]** Turn on **anonymous-account auto-cleanup** (deletes anon accounts >30 days; stops
   them counting toward quota/billing).
 - [x] **5. Add Firebase App Check (reCAPTCHA v3)** — *scaffolded; activation pending console*
