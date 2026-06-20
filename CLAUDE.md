@@ -40,7 +40,7 @@ console: Firestore created, the rules from `firestore.rules` published, and
 | `js/stats.js` | Client-side stats from movies + ratings + members |
 | `js/theme.js` | Theme switcher (localStorage; fires `spinema:themechange`) |
 | `js/app.js` | Orchestration: routing, live Firestore subscriptions, rendering, actions |
-| `firestore.rules` | Security rules (auth required; group members read/write that group) |
+| `firestore.rules` | Member-locked security rules (each club private to its `memberUids`) |
 
 ## Conventions (please keep)
 

@@ -1,25 +1,101 @@
 rules_version = '2';
 
-// Spinema security rules.
+// Spinema security rules — member-locked clubs.
 // --------------------------------------------------------------------------
-// Every browser is signed in anonymously (no visible login), so we require an
-// authenticated request for all access. This blocks the open internet while
-// keeping zero sign-in friction. Within a group, anyone who knows the group
-// code can read/write that group's data — exactly like a Kahoot PIN. That's
-// appropriate for casual, private friend groups.
+// Every browser signs in anonymously, so all access requires auth. Beyond
+// that, a club is private to the Firebase uids in its `memberUids` list:
+//   - GET a group doc: any signed-in user (needed to look one up by code in
+//     order to join, and for the live group listener). LIST is denied, so
+//     nobody can enumerate every club.
+//   - read/write a club's members, movies, ratings: members only.
+//   - JOIN: a non-member may update the group doc ONLY to append their own
+//     uid (and their memberId) — they can't touch anything else, and can't
+//     add anyone but themselves.
+//   - ratings: you may only create/update your OWN rating.
+//   - no client deletes of the group doc.
 //
-// Paste this whole file into the Firebase console:
-//   Build → Firestore Database → Rules → (replace contents) → Publish
+// STILL CLIENT-TRUSTED (to be moved server-side later — see ROADMAP #7/#8):
+//   - turn rotation / finalize / reset invariants (a member may write any
+//     group field), and a member could over-delete a club's movies/ratings.
+//   These are fine for a friendly club; they are not a hostile-actor guard.
+//
+// ROLLOUT: deploy the uid-recording client FIRST (so every member has a uid
+// in `memberUids`), have everyone re-join once, THEN publish these rules —
+// otherwise members without a recorded uid are locked out until they re-join.
+// TEST IN THE FIREBASE EMULATOR before publishing. These rules do NOT
+// auto-deploy: paste into Build -> Firestore Database -> Rules -> Publish.
 // --------------------------------------------------------------------------
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /groups/{groupId} {
-      allow read, create, update: if request.auth != null;
-      // (no group deletes from the client)
 
-      match /{document=**} {
-        allow read, write: if request.auth != null;
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Is the caller a recorded member of group `code`? (default [] so groups
+    // created before memberUids existed don't error — nobody is a member of
+    // them until someone re-joins and records a uid.)
+    function isMember(code) {
+      return signedIn()
+        && request.auth.uid in
+           get(/databases/$(database)/documents/groups/$(code)).data.get('memberUids', []);
+    }
+
+    match /groups/{code} {
+      function existingUids() {
+        return resource.data.get('memberUids', []);
+      }
+      function amMember() {
+        return signedIn() && request.auth.uid in existingUids();
+      }
+      // A non-member may update the group doc ONLY to append their own uid
+      // (and their memberId to the rotation) — exactly the join transaction.
+      function amJoining() {
+        return signedIn()
+          && !(request.auth.uid in existingUids())
+          && request.auth.uid in request.resource.data.memberUids
+          && request.resource.data.memberUids.hasAll(existingUids())
+          && request.resource.data.memberUids.size() == existingUids().size() + 1
+          && request.resource.data.diff(resource.data)
+               .affectedKeys().hasOnly(['memberOrder', 'memberUids']);
+      }
+
+      allow get:    if signedIn();          // look up by code (to join / sync)
+      allow list:   if false;               // never enumerate all clubs
+      allow create: if signedIn()
+                    && request.resource.data.memberUids.hasOnly([request.auth.uid])
+                    && request.resource.data.memberUids.size() == 1;
+      allow update: if amMember() || amJoining();
+      allow delete: if false;
+
+      match /members/{memberId} {
+        allow read:   if isMember(code);
+        // Anyone signed-in may write their OWN member record — needed to join,
+        // before they're in memberUids. uid must be your own, and you can't
+        // overwrite a record that already belongs to a different uid.
+        allow create: if signedIn()
+                      && request.resource.data.uid == request.auth.uid;
+        allow update: if signedIn()
+                      && request.resource.data.uid == request.auth.uid
+                      && (!('uid' in resource.data)
+                          || resource.data.uid == request.auth.uid);
+        allow delete: if false;
+      }
+
+      match /movies/{movieId} {
+        allow read, write: if isMember(code);
+      }
+
+      match /ratings/{ratingId} {
+        allow read:   if isMember(code);
+        allow create: if isMember(code)
+                      && request.resource.data.uid == request.auth.uid;
+        allow update: if isMember(code)
+                      && request.resource.data.uid == request.auth.uid
+                      && (!('uid' in resource.data)
+                          || resource.data.uid == request.auth.uid);
+        allow delete: if isMember(code);   // needed by the group reset
       }
     }
   }

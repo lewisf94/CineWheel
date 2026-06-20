@@ -11,15 +11,16 @@ your Firebase project from here. I write the code; you deploy.
 
 ## P0 — Security (critical)
 
-- [ ] **1. Record the Firebase auth `uid` as the real identity** (foundation for member-locked rules)
+- [x] **1. Record the Firebase auth `uid` as the real identity** (foundation for member-locked rules)
   - store `memberUids: [uid]` on the group doc, `uid` on each member doc, `uid` on each rating
   - files: `js/session.js` (add `getUid`), `js/groups.js`, `js/ratings.js`
   - additive & safe under current rules; lets existing members record a uid on their next visit
-- [ ] **2. Rewrite `firestore.rules` to member-scoped access**
+- [x] **2. Rewrite `firestore.rules` to member-scoped access** — *written; publish pending (see #3)*
   - `get` allowed, **`list` denied** (no enumerating every club)
   - read/write a club only if `request.auth.uid in group.memberUids`
   - members can only write their **own** rating; can't delete others' data; can't hijack arbitrary clubs
   - constrain the "join" path (you may add only your own uid)
+  - `performReset` now chunks deletes (≤15/batch) to stay under the rules' 20 get()/batch ceiling
   - **[console]** publish the rules — **test in the Firebase Emulator first**
 - [ ] **3. Safe rollout** — ship step 1 first so members have a uid recorded, *then* publish step 2
   (so existing members aren't locked out). For this test app: re-join once after deploy.

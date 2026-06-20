@@ -98,6 +98,30 @@ segment. Sound is WebAudio; the win burst is canvas-confetti.
 
 ## Security model
 
-`firestore.rules`: all access requires `request.auth != null`; within a group,
-any authenticated user who knows the code can read/write that group's data
-(Kahoot-PIN trust model). No client deletes of group docs.
+`firestore.rules` locks each club to its own members. All access requires
+`request.auth != null` (anonymous sign-in), and beyond that:
+
+- **Membership = `memberUids`.** A club's members, movies and ratings are
+  readable/writable only if `request.auth.uid` is in the group's `memberUids`
+  list (checked via a `get()` on the group doc).
+- **`get` yes, `list` no.** Anyone signed in may *read a single group doc by
+  code* (needed to look one up in order to join, and for the live group
+  listener) — but listing/enumerating all clubs is denied.
+- **Join is constrained.** A non-member may update the group doc *only* to
+  append their **own** uid (and their memberId to the rotation) — they can't
+  add anyone else or touch any other field. So you can't read or alter a club
+  you haven't joined.
+- **Own rating only.** A member may create/update only the rating carrying
+  their own `uid`. No client deletes of the group doc.
+
+**Still client-trusted** (see `ROADMAP.md` #7/#8): the turn-rotation, finalize
+and unanimous-reset *invariants* are enforced in the client, and a member could
+over-delete their own club's movies/ratings. That's fine for a friendly club,
+not a hostile-actor guarantee — moving those to a Cloud Function is the planned
+hardening.
+
+**Rollout:** the uid-recording client (this code) must ship **before** the new
+rules are published, so existing members record a uid (`memberUids`) on their
+next visit; otherwise they'd be locked out until they re-join. The rules are in
+`firestore.rules` but do **not** auto-deploy — test them in the Firebase
+Emulator, then paste into the console (Firestore → Rules → Publish).

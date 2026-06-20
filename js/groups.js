@@ -146,19 +146,26 @@ export async function cancelReset(code) {
 
 // Wipe the club's films, ratings and history; keep members and the code.
 // Run once everyone has approved. Idempotent enough for our needs.
+//
+// Deletes are chunked: under the member-locked rules each delete triggers a
+// membership get(), and a batched write may make at most 20 such document-
+// access calls. Small batches keep us comfortably under that ceiling.
 export async function performReset(code) {
   const [moviesSnap, ratingsSnap] = await Promise.all([
     getDocs(collection(db, "groups", code, "movies")),
     getDocs(collection(db, "groups", code, "ratings")),
   ]);
-  const batch = writeBatch(db);
-  moviesSnap.forEach((d) => batch.delete(d.ref));
-  ratingsSnap.forEach((d) => batch.delete(d.ref));
-  batch.update(doc(db, "groups", code), {
+  const refs = [...moviesSnap.docs, ...ratingsSnap.docs].map((d) => d.ref);
+  const CHUNK = 15;
+  for (let i = 0; i < refs.length; i += CHUNK) {
+    const batch = writeBatch(db);
+    refs.slice(i, i + CHUNK).forEach((ref) => batch.delete(ref));
+    await batch.commit();
+  }
+  await updateDoc(doc(db, "groups", code), {
     currentFilm: null,
     lastSpin: null,
     currentSpinnerIndex: 0,
     resetRequest: null,
   });
-  await batch.commit();
 }
