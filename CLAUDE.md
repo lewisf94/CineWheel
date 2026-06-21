@@ -77,3 +77,7 @@ reveal, stats, and a reset — across all three themes, desktop + mobile.
 GitHub Pages serves `main` at the root; pushing to `main` redeploys to
 https://lewisf94.github.io/spinema/ within ~a minute. `.nojekyll` stops Pages
 from ignoring the `js/` folder.
+
+**Git workflow: commit straight to `main`.** Don't create feature branches —
+commit and push every change directly to `main` (it's what Pages deploys, so
+keeping a separate branch in sync just adds friction). No PRs unless asked.

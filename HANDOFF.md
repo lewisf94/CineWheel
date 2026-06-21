@@ -61,6 +61,5 @@ _A snapshot for picking up in a fresh chat/session. The living backlog is in
 - **No emojis** in the UI. Escape user input with the local `esc()` helper.
 - Themes are per-user (localStorage), never in Firestore. Three only:
   `a24` (Default), `festival` (Cinema), `strokes` (Web 1.0).
-- Develop on **`claude/blissful-fermi-lqvvx1`**; Pages serves **`main`**; keep
-  both in sync. (After the repo rename, a sandbox git proxy may 503 when pushing
-  to `main` via the old name — merge the branch into `main` on GitHub instead.)
+- **Commit straight to `main`** (no feature branches, no PRs unless asked) —
+  Pages serves `main`, so a separate branch just adds sync friction.
