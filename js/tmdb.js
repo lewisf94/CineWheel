@@ -15,7 +15,7 @@
 //  TMDB API but is not endorsed or certified by TMDB. https://www.themoviedb.org
 // ============================================================================
 
-const TMDB_API_KEY = ""; // <-- paste your TMDB v3 API key here to enable
+const TMDB_API_KEY = "f000eb911a380f5abc35f9cdcee19412"; // TMDB v3 API key; blank disables TMDB
 
 const API = "https://api.themoviedb.org/3";
 const IMG = "https://image.tmdb.org/t/p/";
