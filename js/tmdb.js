@@ -85,3 +85,29 @@ export async function getDetails(tmdbId) {
     return null;
   }
 }
+
+// Best-guess streaming region from the browser locale (e.g. en-GB -> GB).
+export function watchRegion() {
+  const parts = (navigator.language || "en-US").split("-");
+  return (parts[1] || "US").toUpperCase();
+}
+
+// "Where to watch" for a film in a region. TMDB sources this from JustWatch, so
+// usage REQUIRES crediting JustWatch and linking to the provided page (we do
+// both in the UI). Returns { providers:[{name,logo}], link } or null.
+export async function getWatchProviders(tmdbId, region = "US") {
+  if (!tmdbEnabled || !tmdbId) return null;
+  try {
+    const res = await fetch(`${API}/movie/${tmdbId}/watch/providers?api_key=${TMDB_API_KEY}`);
+    if (!res.ok) return null;
+    const r = ((await res.json()).results || {})[region];
+    if (!r) return null;
+    const seen = new Set();
+    const providers = [...(r.flatrate || []), ...(r.free || []), ...(r.ads || [])]
+      .filter((p) => p && p.provider_name && !seen.has(p.provider_name) && seen.add(p.provider_name))
+      .map((p) => ({ name: p.provider_name, logo: p.logo_path || "" }));
+    return { providers, link: r.link || "" };
+  } catch (_) {
+    return null;
+  }
+}

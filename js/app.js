@@ -17,7 +17,7 @@ import {
 } from "./wheel.js";
 import { buildStarRating, starsHtml, saveRating } from "./ratings.js";
 import { renderStats } from "./stats.js";
-import { tmdbEnabled, TMDB_STATEMENT, searchTitles, getDetails, posterUrl } from "./tmdb.js";
+import { tmdbEnabled, TMDB_STATEMENT, searchTitles, getDetails, posterUrl, getWatchProviders, watchRegion } from "./tmdb.js";
 
 // ---- tiny helpers ----------------------------------------------------------
 const $ = (sel) => document.querySelector(sel);
@@ -557,6 +557,7 @@ function renderFilmCard() {
       ${movie.posterPath ? `<img class="film-poster" src="${esc(posterUrl(movie.posterPath, "w185"))}" alt="" loading="lazy" />` : ""}
       <h1 class="film-title">${esc(cf.title)}</h1>
       ${metaBits ? `<div class="film-tmdb muted small">${esc(metaBits)}</div>` : ""}
+      ${tmdbEnabled && movie.tmdbId ? `<div id="watch-providers" class="watch-providers"></div>` : ""}
       <div class="film-meta">
         <span>picked by <b>${esc(cf.spinnerName || "—")}</b></span>
         <span>added by <b>${esc(cf.addedByName || "—")}</b></span>
@@ -574,6 +575,8 @@ function renderFilmCard() {
       <div class="reveal-note">Reviews stay sealed — and the next spin stays locked — until everyone has watched and rated.</div>
       ${isSpinner ? `<div class="force-line"><button class="text-link" id="force-finish">Wrap up now: reveal reviews and pass the turn</button></div>` : ""}
     `;
+
+    if (tmdbEnabled && movie.tmdbId) renderWatchProviders(movie.tmdbId);
 
     const wb = $("#watched-btn");
     if (wb) wb.addEventListener("click", () => markWatchedAck(state.code, cf.movieId, myId));
@@ -716,6 +719,29 @@ function renderMoviesTab() {
 function posterThumb(m, size = "w92") {
   const url = m.posterPath ? posterUrl(m.posterPath, size) : "";
   return url ? `<img class="poster-thumb" src="${esc(url)}" alt="" loading="lazy" />` : "";
+}
+
+// "Where to watch" — fetched once per film (cached) and injected into the film
+// card. TMDB sources this from JustWatch, which we credit and link.
+const providerCache = {};
+async function renderWatchProviders(tmdbId) {
+  let data = providerCache[tmdbId];
+  if (data === undefined) {
+    data = await getWatchProviders(tmdbId, watchRegion());
+    providerCache[tmdbId] = data;
+  }
+  const el = $("#watch-providers");
+  if (!el) return; // card re-rendered away
+  if (!data || !data.providers.length) { el.innerHTML = ""; return; }
+  el.innerHTML = `
+    <div class="watch-label muted small">Where to watch</div>
+    <div class="watch-logos">${data.providers
+      .slice(0, 6)
+      .map((p) => p.logo
+        ? `<img class="watch-logo" src="${esc(posterUrl(p.logo, "w45"))}" alt="${esc(p.name)}" title="${esc(p.name)}" loading="lazy" />`
+        : `<span class="watch-name">${esc(p.name)}</span>`)
+      .join("")}</div>
+    <div class="watch-attr muted small">Streaming data by JustWatch${data.link ? ` &middot; <a href="${esc(data.link)}" target="_blank" rel="noopener">details</a>` : ""}</div>`;
 }
 
 // "1994  ·  142m  ·  Drama, Crime" from whatever TMDB metadata a film has.

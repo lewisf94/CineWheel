@@ -166,7 +166,9 @@ a result stores the year, runtime and genres (shown on the cards):
 2. Paste it into `TMDB_API_KEY` at the top of [`js/tmdb.js`](./js/tmdb.js), then
    commit + push.
 
-With no key, the box stays a plain title input — nothing here runs and no TMDB
-requests are made. The key ships in the client (like the Firebase key), which is
-fine for TMDB's non-commercial use. The app shows TMDB's required attribution
-wherever the data appears.
+With a key you also get a **"Where to watch"** row on the film-of-the-week card
+(streaming providers for your region). With no key, the box stays a plain title
+input — nothing here runs and no TMDB requests are made. The key ships in the
+client (like the Firebase key), which is fine for TMDB's non-commercial use. The
+app shows TMDB's required attribution, and credits **JustWatch** for the
+where-to-watch data, wherever those appear.

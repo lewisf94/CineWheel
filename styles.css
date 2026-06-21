@@ -177,6 +177,14 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
 .tmdb-attribution { margin: 10px 0 0; }
 .film-poster { display: block; width: 120px; height: auto; border-radius: 6px; border: 1px solid var(--line); margin: 0 auto 14px; }
 .film-tmdb { margin: 4px 0 0; }
+.watch-providers:empty { display: none; }
+.watch-providers { margin: 14px 0 2px; }
+.watch-label { text-transform: uppercase; letter-spacing: 0.1em; }
+.watch-logos { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 6px 0; }
+[data-theme="a24"] .watch-logos { justify-content: flex-start; }
+.watch-logo { width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--line); object-fit: cover; background: var(--line); }
+.watch-name { padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; font-size: 0.8rem; }
+.watch-attr { margin-top: 4px; }
 .watched-card .poster-thumb { float: left; width: 52px; height: 78px; margin: 2px 14px 6px 0; }
 .watched-card::after { content: ""; display: block; clear: both; }
 [data-theme="a24"] .film-poster { margin: 0 0 16px; }
