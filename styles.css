@@ -187,7 +187,7 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
 .watch-attr { margin-top: 4px; }
 .watched-card .poster-thumb { float: left; width: 52px; height: 78px; margin: 2px 14px 6px 0; }
 .watched-card::after { content: ""; display: block; clear: both; }
-[data-theme="a24"] .film-poster { margin: 0 0 16px; }
+[data-theme="a24"] .film-poster { margin: 0 auto 16px; }
 
 /* ---- ratings / history ---- */
 .pending-card { border-color: var(--line-strong); }

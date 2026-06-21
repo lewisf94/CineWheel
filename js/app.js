@@ -720,6 +720,14 @@ function renderMoviesTab() {
     input.value = "";
     input.blur();
     hideTmdbResults();
+    // Typed-and-added (no autocomplete pick) still gets enriched: resolve the
+    // title against TMDB so posters, "Where to watch" and the Watch-habits stats
+    // light up for plain adds too. No-op if TMDB is off/unreachable (meta stays
+    // null). The displayed title is always exactly what was typed.
+    if (!meta && tmdbEnabled) {
+      const hits = await searchTitles(t, 1);
+      if (hits.length) meta = (await getDetails(hits[0].tmdbId)) || hits[0];
+    }
     await addMovie(state.code, t, meta);
   };
   $("#add-movie-btn").addEventListener("click", () => addNow());
