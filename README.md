@@ -1,5 +1,7 @@
 # Spinema
 
+**Live app → <https://lewisf94.github.io/spinema/>**
+
 A film-club wheel for groups of friends. Add films to a wheel, take turns each
 week spinning to pick what to watch, set a watch-by deadline, then rate (in
 half-stars) and review what you watched — reviews stay sealed until the whole
@@ -10,6 +12,10 @@ club is in, with stats along the way.
   and each group's data is kept separate.
 - **Saved forever & shared live** — everything is stored in Firebase, so people
   can leave and come back to the same info, and updates appear in real time.
+- **See who can watch** — say which streaming services you have, and each film
+  shows who can actually stream it (needs the optional TMDB key, below).
+- **Three themes** — Default, Cinema and a Web 1.0 throwback; pick per-browser.
+- **Installable** — add it to your phone/desktop home screen (PWA).
 
 ---
 
@@ -157,18 +163,30 @@ force clients onto fresh assets after a big change, bump `CACHE` in `sw.js`.
   lands on it. The spinner broadcasts the spin so everyone animates the same
   result.
 
-### Film posters & metadata (optional, via TMDB)
-Built in, **off by default**. Add a free [TMDB](https://www.themoviedb.org) API
-key and the "Add a film" box gains title autocomplete with posters, and picking
-a result stores the year, runtime and genres (shown on the cards):
+### Film posters, metadata & streaming (optional, via TMDB)
+Built in, and **enabled on the live site** (a key is set in `js/tmdb.js`); it's
+**off only if you blank that key** in your own copy. With a free
+[TMDB](https://www.themoviedb.org) API key you get:
+
+- **Title autocomplete with posters** in the "Add a film" box; picking a result
+  stores the year, runtime and genres (shown on the cards and in **Stats →
+  Watch habits**). Typing a title and pressing **Add** still enriches it — the
+  title is matched against TMDB automatically.
+- **"Where to watch"** on the film-of-the-week card — the streaming providers
+  for your region (works even for films added before a key was set; the match is
+  resolved from the title).
+- **"Who can watch"** — each member picks the streaming services they subscribe
+  to (on the **Films** tab); Spinema cross-references them with where each film
+  is streaming and shows who's covered, with a per-film badge on the wheel so you
+  can favour films **everyone** can watch.
+
+Setup:
 1. Create a free TMDB account → **Settings → API** → copy the **API Key (v3
    auth)**.
 2. Paste it into `TMDB_API_KEY` at the top of [`js/tmdb.js`](./js/tmdb.js), then
    commit + push.
 
-With a key you also get a **"Where to watch"** row on the film-of-the-week card
-(streaming providers for your region). With no key, the box stays a plain title
-input — nothing here runs and no TMDB requests are made. The key ships in the
-client (like the Firebase key), which is fine for TMDB's non-commercial use. The
-app shows TMDB's required attribution, and credits **JustWatch** for the
-where-to-watch data, wherever those appear.
+With no key, the box stays a plain title input — nothing here runs and no TMDB
+requests are made. The key ships in the client (like the Firebase key), which is
+fine for TMDB's non-commercial use. The app shows TMDB's required attribution,
+and credits **JustWatch** for the where-to-watch data, wherever those appear.
