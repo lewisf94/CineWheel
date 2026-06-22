@@ -80,7 +80,9 @@ service cloud.firestore {
                       && request.resource.data.uid == request.auth.uid
                       && (!('uid' in resource.data)
                           || resource.data.uid == request.auth.uid);
-        allow delete: if false;
+        // Members may delete member records — used by the admin "kick" (and the
+        // group reset). Client-trusted, like movie/rating deletes above.
+        allow delete: if isMember(code);
       }
 
       match /movies/{movieId} {

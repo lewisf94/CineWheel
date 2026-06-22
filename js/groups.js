@@ -10,6 +10,7 @@ import {
   getDocs,
   setDoc,
   updateDoc,
+  deleteDoc,
   serverTimestamp,
   runTransaction,
   arrayUnion,
@@ -57,6 +58,7 @@ export async function createGroup(groupName) {
     name: (groupName || "").trim() || "Film Club",
     createdAt: serverTimestamp(),
     createdByName: name,
+    adminMemberId: memberId,            // the creator runs the club (can kick)
     memberOrder: [memberId],
     memberUids: uid ? [uid] : [],
     currentSpinnerIndex: 0,
@@ -81,6 +83,13 @@ export async function joinGroup(rawCode) {
 
   const snap = await getDoc(groupRef);
   if (!snap.exists()) throw new Error("No group found with that code.");
+
+  // Removed by the admin? Block the rejoin (soft — a fresh anonymous identity
+  // could still get in; real enforcement would be server-side).
+  const gd = snap.data();
+  if ((gd.bannedUids || []).includes(uid) || (gd.bannedMemberIds || []).includes(memberId)) {
+    throw new Error("You've been removed from this club.");
+  }
 
   // Portable identity: if our auth uid already belongs to this club but our
   // local memberId isn't a known seat (e.g. we recovered our account via
@@ -129,6 +138,39 @@ export function currentSpinnerId(group) {
   const raw = group.currentSpinnerIndex || 0;
   const i = ((raw % order.length) + order.length) % order.length;
   return order[i];
+}
+
+// Admin action: remove a member from the club. Drops them from the rotation and
+// from memberUids (so the security rules stop trusting them), bans the id/uid so
+// they can't immediately rejoin with the code, fixes the spinner pointer, and
+// best-effort deletes their member record. Client-trusted, like the rest of the
+// rotation logic — meant for a friendly club, not a hostile-actor guard.
+export async function kickMember(code, memberId, uid) {
+  const ref = doc(db, "groups", code);
+  await runTransaction(db, async (tx) => {
+    const g = (await tx.get(ref)).data() || {};
+    const order = g.memberOrder || [];
+    const idx = order.indexOf(memberId);
+    if (idx === -1) return; // already gone
+    const newOrder = order.filter((id) => id !== memberId);
+    const updates = {
+      memberOrder: newOrder,
+      memberUids: (g.memberUids || []).filter((u) => u !== uid),
+      bannedMemberIds: Array.from(new Set([...(g.bannedMemberIds || []), memberId])),
+    };
+    if (uid) updates.bannedUids = Array.from(new Set([...(g.bannedUids || []), uid]));
+    // Keep the spinner pointing at the same person (or wrap if needed).
+    let spin = g.currentSpinnerIndex || 0;
+    if (idx < spin) spin -= 1;
+    updates.currentSpinnerIndex = newOrder.length
+      ? ((spin % newOrder.length) + newOrder.length) % newOrder.length : 0;
+    const rr = g.resetRequest;
+    if (rr) updates.resetRequest = { ...rr, approvals: (rr.approvals || []).filter((id) => id !== memberId) };
+    tx.update(ref, updates);
+  });
+  // Tidy up their record (needs the relaxed members-delete rule; harmless if it
+  // fails — they're already out of memberOrder, so nothing counts them).
+  try { await deleteDoc(doc(db, "groups", code, "members", memberId)); } catch (_) {}
 }
 
 // Update this group's display name.

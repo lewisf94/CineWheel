@@ -148,9 +148,13 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
 .turn-order { margin-top: 26px; text-align: center; }
 .turn-order .small { color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.7rem; }
 .turn-chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; align-items: center; margin-top: 10px; }
-.turn-chip { border: 1px solid var(--line-strong); border-radius: 999px; padding: 5px 13px; font-size: 0.82rem; color: var(--muted); }
+.turn-chip { display: inline-flex; align-items: center; border: 1px solid var(--line-strong); border-radius: 999px; padding: 5px 13px; font-size: 0.82rem; color: var(--muted); }
 .turn-chip.current { border-color: var(--accent); color: var(--accent); font-weight: 600; }
 .turn-arrow { color: var(--faint); }
+.chip-admin { margin-left: 6px; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 1px 5px; }
+.chip-kick { margin-left: 6px; border: none; background: none; color: var(--muted); cursor: pointer; font-size: 1.05rem; line-height: 1; padding: 0 2px; }
+.chip-kick:hover { color: #c2482e; }
+.chip-kick:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
 /* ---- films list ---- */
 .add-row { display: flex; gap: 12px; }

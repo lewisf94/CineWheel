@@ -9,7 +9,7 @@ import {
 } from "./session.js";
 import {
   createGroup, joinGroup, currentSpinnerId, normaliseCode,
-  requestReset, approveReset, cancelReset, performReset, setMyServices,
+  requestReset, approveReset, cancelReset, performReset, setMyServices, kickMember,
 } from "./groups.js";
 import { addMovie, removeMovie, commitSpin, markWatchedAck, finalizeRound, setDeadline, setMovieServices } from "./movies.js";
 import {
@@ -154,6 +154,17 @@ function wireStaticUI() {
       icon.textContent = "Copied";
       setTimeout(() => { icon.textContent = "Copy"; }, 1200);
     }
+  });
+
+  // Invite link: the full URL with ?g=CODE, which auto-joins on open (the share
+  // code still works for typing in by hand).
+  $("#copy-link").addEventListener("click", () => {
+    if (!state.code) return;
+    const url = location.origin + location.pathname + "?g=" + encodeURIComponent(state.code);
+    navigator.clipboard?.writeText(url);
+    const btn = $("#copy-link");
+    btn.textContent = "Link copied";
+    setTimeout(() => { btn.textContent = "Invite link"; }, 1400);
   });
 
   document.querySelectorAll(".tab").forEach((btn) =>
@@ -432,13 +443,22 @@ const watchedMovies = () =>
   state.movies.filter((m) => m.status === "watched").sort((a, b) => ms(b.watchedAt, Date.now()) - ms(a.watchedAt, Date.now()));
 const orderedMembers = () =>
   (state.group?.memberOrder || []).map((id) => state.members.find((m) => m.id === id)).filter(Boolean);
+// memberOrder is the source of truth for who's *in* the club (so a kicked member
+// stops counting everywhere, even before their member doc is gone).
+const activeMemberIds = () => state.group?.memberOrder || [];
+
+// The club admin (creator). Falls back to the first joiner for older groups
+// created before adminMemberId was recorded.
+const groupAdminId = () =>
+  state.group?.adminMemberId || (state.group?.memberOrder || [])[0] || null;
+const isAdmin = () => !!groupAdminId() && groupAdminId() === getMemberId();
 
 // Where a round stands: who's watched, who's rated, and whether it's complete.
 function roundState(cf) {
   const myId = getMemberId();
   const movie = state.movies.find((m) => m.id === cf.movieId);
   const watchedBy = movie?.watchedBy || [];
-  const ids = state.members.map((m) => m.id);
+  const ids = activeMemberIds();
   const ratedIds = new Set(
     state.ratings.filter((r) => r.movieId === cf.movieId && r.score > 0).map((r) => r.memberId)
   );
@@ -512,7 +532,7 @@ function render() {
   renderResetBanner();
   const rr = state.group?.resetRequest;
   if (rr) {
-    const ids = state.members.map((m) => m.id);
+    const ids = activeMemberIds();
     const all = ids.length > 0 && ids.every((id) => (rr.approvals || []).includes(id));
     if (all && !resetting) {
       resetting = true;
@@ -537,7 +557,7 @@ function render() {
   if (state.tab === "wheel") renderWheelTab();
   else if (state.tab === "movies") { if (!editingWithin($("#tab-movies"))) renderMoviesTab(); }
   else if (state.tab === "history") { if (!editingWithin($("#tab-history"))) renderHistoryTab(); }
-  else if (state.tab === "stats") { renderStats($("#tab-stats"), state.movies, state.ratings, state.members); appendResetControl($("#tab-stats")); }
+  else if (state.tab === "stats") { renderStats($("#tab-stats"), state.movies, state.ratings, orderedMembers()); appendResetControl($("#tab-stats")); }
 
   maybePlaySpin(state.group?.lastSpin);
 }
@@ -638,8 +658,16 @@ function renderWheelTab() {
   const movies = wheelMovies();
 
   const order = orderedMembers();
+  const adminId = groupAdminId();
+  const iAmAdmin = isAdmin();
   const orderHtml = order
-    .map((m) => `<span class="turn-chip ${m.id === spinnerId ? "current" : ""}">${esc(m.name || "?")}</span>`)
+    .map((m) => {
+      const admin = m.id === adminId ? `<span class="chip-admin" title="Club admin">admin</span>` : "";
+      const kick = iAmAdmin && m.id !== myId
+        ? `<button class="chip-kick" data-kick="${m.id}" data-kick-uid="${esc(m.uid || "")}" title="Remove ${esc(m.name || "member")}" aria-label="Remove ${esc(m.name || "member")}">×</button>`
+        : "";
+      return `<span class="turn-chip ${m.id === spinnerId ? "current" : ""}">${esc(m.name || "?")}${admin}${kick}</span>`;
+    })
     .join('<span class="turn-arrow">→</span>');
 
   pane.innerHTML = `
@@ -656,6 +684,16 @@ function renderWheelTab() {
   `;
 
   renderIdleWheel($("#wheel-canvas"), movies);
+
+  pane.querySelectorAll("[data-kick]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const m = state.members.find((x) => x.id === b.dataset.kick);
+      const name = m?.name || "this member";
+      if (confirm(`Remove ${name} from the club? They'll lose access and can't rejoin with the code.`)) {
+        kickMember(state.code, b.dataset.kick, b.dataset.kickUid || m?.uid || "");
+      }
+    })
+  );
 
   const spinBtn = $("#spin-btn");
   if (isMyTurn && movies.length) {
@@ -808,7 +846,7 @@ function availabilityLabel(data, withSvc) {
 }
 
 const membersWithServices = () =>
-  state.members.filter((m) => Array.isArray(m.services) && m.services.length);
+  orderedMembers().filter((m) => Array.isArray(m.services) && m.services.length);
 
 // Annotate each wheel film with where it streams, and — once members have set
 // their streaming services — how many of them are covered. Lazy + cached per
@@ -978,7 +1016,7 @@ function watchProvidersHtml(data) {
 // out (we can't know) and nudged to add them on the Films tab.
 function whoCanWatchHtml(data) {
   const providerNames = (data?.providers || []).map((p) => p.name);
-  const withSvc = state.members.filter((m) => Array.isArray(m.services) && m.services.length);
+  const withSvc = membersWithServices();
   if (!providerNames.length) {
     return `<div class="who-note muted small">No subscription streaming found for your region — it may be rental-only.</div>`;
   }
@@ -1167,7 +1205,7 @@ function renderResetBanner() {
   if (!rr) { el.classList.add("hidden"); el.innerHTML = ""; return; }
 
   const myId = getMemberId();
-  const ids = state.members.map((m) => m.id);
+  const ids = activeMemberIds();
   const approvals = rr.approvals || [];
   const approvedCount = ids.filter((id) => approvals.includes(id)).length;
   const iApproved = approvals.includes(myId);
