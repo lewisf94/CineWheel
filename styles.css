@@ -236,15 +236,14 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
 
 /* ---- stars ---- */
 .stars-input { font-size: 30px; display: inline-flex; line-height: 1; user-select: none; }
-.stars-input .star { position: relative; width: 1em; height: 1em; }
-.stars-input .bg, .stars-input .fg { position: absolute; left: 0; top: 0; }
+.stars-input .star { position: relative; display: inline-block; height: 1em; }
 .stars-input .bg { color: var(--star-empty); }
-.stars-input .fg { color: var(--accent); overflow: hidden; width: 0; white-space: nowrap; }
+.stars-input .fg { position: absolute; left: 0; top: 0; color: var(--accent); overflow: hidden; width: 0; white-space: nowrap; }
 .stars-input .half { position: absolute; top: 0; height: 100%; width: 50%; background: none; border: none; padding: 0; cursor: pointer; z-index: 2; }
 .stars-input .half.left { left: 0; }
 .stars-input .half.right { right: 0; }
 .stars-display { font-size: 17px; display: inline-flex; line-height: 1; vertical-align: middle; }
-.stars-display .star { position: relative; width: 1em; height: 1em; display: inline-block; }
+.stars-display .star { position: relative; display: inline-block; height: 1em; }
 .stars-display .bg { color: var(--star-empty); }
 .stars-display .fg { position: absolute; left: 0; top: 0; color: var(--accent); overflow: hidden; white-space: nowrap; }
 

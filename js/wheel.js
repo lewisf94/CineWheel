@@ -122,26 +122,28 @@ function drawHoles(ctx, cx, cy, radius, holeR, count, fill, edge, rot) {
   }
 }
 
-// The reel's outer band: a thick rim with sprocket holes, between rSeg and rOuter.
-function drawReelRim(ctx, cx, cy, rSeg, rOuter, s, bg, rot) {
+// The reel's outer band: a clean thick rim. Real reels have a smooth rim (no
+// perimeter holes), and on our wheel that's where the film titles sit.
+function drawReelRim(ctx, cx, cy, rSeg, rOuter, s) {
   const band = rOuter - rSeg;
   ctx.beginPath();
   ctx.arc(cx, cy, (rSeg + rOuter) / 2, 0, 2 * Math.PI);
   ctx.strokeStyle = s.ring; ctx.lineWidth = band; ctx.stroke();
-  drawHoles(ctx, cx, cy, (rSeg + rOuter) / 2, band * 0.3, 16, bg, s.ring, rot);
   ctx.beginPath(); ctx.arc(cx, cy, rOuter, 0, 2 * Math.PI);
   ctx.strokeStyle = s.ring; ctx.lineWidth = s.ringW; ctx.stroke();
   ctx.beginPath(); ctx.arc(cx, cy, rSeg, 0, 2 * Math.PI);
   ctx.strokeStyle = s.ring; ctx.lineWidth = s.ringW; ctx.stroke();
 }
 
-// The reel hub: a centre cap ringed with small holes, plus a spindle.
+// The reel hub: a centre cap ringed with small holes, plus a spindle (hole+pin).
 function drawReelHub(ctx, cx, cy, s, bg, rot) {
   ctx.beginPath(); ctx.arc(cx, cy, s.hubR, 0, 2 * Math.PI);
   ctx.fillStyle = s.hubFill; ctx.fill();
   ctx.strokeStyle = s.hubStroke; ctx.lineWidth = 3; ctx.stroke();
-  drawHoles(ctx, cx, cy, s.hubR * 0.58, Math.max(2, s.hubR * 0.17), 6, bg, null, rot);
-  ctx.beginPath(); ctx.arc(cx, cy, Math.max(2, s.hubR * 0.2), 0, 2 * Math.PI);
+  drawHoles(ctx, cx, cy, s.hubR * 0.56, Math.max(1.5, s.hubR * 0.13), 6, bg, null, rot);
+  ctx.beginPath(); ctx.arc(cx, cy, s.hubR * 0.28, 0, 2 * Math.PI);
+  ctx.fillStyle = bg; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, Math.max(1.5, s.hubR * 0.1), 0, 2 * Math.PI);
   ctx.fillStyle = s.hubStroke; ctx.fill();
 }
 
@@ -200,7 +202,20 @@ function drawWheel(ctx, size, segments, rotation, highlightIndex) {
     ctx.restore();
   }
 
-  drawReelRim(ctx, cx, cy, rSeg, rOuter, s, bg, rotation);
+  // reel spokes — the section separators, drawn over the seams as raised arms
+  ctx.strokeStyle = s.ring;
+  ctx.lineWidth = Math.max(s.segStrokeW + 1, size * 0.011);
+  ctx.lineCap = "butt";
+  for (let i = 0; i < n; i++) {
+    const a = i * seg + rotation;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a) * (s.hubR - 1), cy + Math.sin(a) * (s.hubR - 1));
+    ctx.lineTo(cx + Math.cos(a) * rSeg, cy + Math.sin(a) * rSeg);
+    ctx.stroke();
+  }
+  ctx.lineCap = "round";
+
+  drawReelRim(ctx, cx, cy, rSeg, rOuter, s);
   drawReelHub(ctx, cx, cy, s, bg, rotation);
 }
 
@@ -238,7 +253,7 @@ export function renderIdleWheel(canvas, movies) {
     ctx.beginPath();
     ctx.arc(cx, cy, rSeg, 0, 2 * Math.PI);
     ctx.fill();
-    drawReelRim(ctx, cx, cy, rSeg, rOuter, s, bg, 0);
+    drawReelRim(ctx, cx, cy, rSeg, rOuter, s);
     drawReelHub(ctx, cx, cy, s, bg, 0);
     ctx.fillStyle = s.emptyText;
     ctx.font = "16px system-ui, sans-serif";
@@ -294,7 +309,11 @@ function playSpinOverlay(spin, onDone) {
     const t = Math.min(1, (now - startTime) / duration);
     const eased = 1 - Math.pow(1 - t, 5); // easeOutQuint — slow, satisfying settle
     const rotation = eased * target;
-    drawWheel(ctx, size, segments, rotation, t >= 1 ? winnerIndex : -1);
+    // easeOutQuint has a long, imperceptible tail; once we're within ~1° of home
+    // the wheel looks stopped, so finish there instead of waiting out the timer —
+    // otherwise the confetti lands a beat late.
+    const settled = t >= 1 || target - rotation < 0.02;
+    drawWheel(ctx, size, segments, rotation, settled ? winnerIndex : -1);
     drawPointer(ctx, size);
 
     const boundary = Math.floor(rotation / seg);
@@ -304,7 +323,7 @@ function playSpinOverlay(spin, onDone) {
       lastBoundary = boundary;
     }
 
-    if (t < 1) requestAnimationFrame(frame);
+    if (!settled) requestAnimationFrame(frame);
     else finish();
   }
 
