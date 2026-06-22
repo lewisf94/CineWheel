@@ -86,6 +86,33 @@ export async function getDetails(tmdbId) {
   }
 }
 
+// Everything for the "more about this film" popup: overview, cast, director,
+// rating — fetched on demand (not stored). Returns null on any error.
+export async function getMovieDetail(tmdbId) {
+  if (!tmdbEnabled || !tmdbId) return null;
+  try {
+    const res = await fetch(`${API}/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=en-US&append_to_response=credits`);
+    if (!res.ok) return null;
+    const d = await res.json();
+    const crew = (d.credits && d.credits.crew) || [];
+    return {
+      tmdbId,
+      title: d.title || d.original_title || "",
+      year: yearOf(d.release_date),
+      runtime: typeof d.runtime === "number" ? d.runtime : null,
+      genres: (d.genres || []).map((g) => g.name).filter(Boolean),
+      posterPath: d.poster_path || "",
+      overview: d.overview || "",
+      tagline: d.tagline || "",
+      voteAverage: typeof d.vote_average === "number" && d.vote_average > 0 ? d.vote_average : null,
+      directors: crew.filter((c) => c.job === "Director").map((c) => c.name).filter(Boolean),
+      cast: ((d.credits && d.credits.cast) || []).slice(0, 8).map((c) => c.name).filter(Boolean),
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
 // Common "where to watch" regions (TMDB keys provider results by ISO 3166-1
 // country code). Enough to cover most clubs; the user can override the guess.
 export const WATCH_REGIONS = [

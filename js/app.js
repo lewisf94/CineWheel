@@ -17,7 +17,7 @@ import {
 } from "./wheel.js";
 import { buildStarRating, starsHtml, saveRating } from "./ratings.js";
 import { renderStats } from "./stats.js";
-import { tmdbEnabled, TMDB_STATEMENT, searchTitles, getDetails, posterUrl, getWatchProviders, watchRegion, setWatchRegion, WATCH_REGIONS, STREAMING_SERVICES, canStream } from "./tmdb.js";
+import { tmdbEnabled, TMDB_STATEMENT, searchTitles, getDetails, getMovieDetail, posterUrl, getWatchProviders, watchRegion, setWatchRegion, WATCH_REGIONS, STREAMING_SERVICES, canStream } from "./tmdb.js";
 
 // ---- tiny helpers ----------------------------------------------------------
 const $ = (sel) => document.querySelector(sel);
@@ -128,10 +128,13 @@ function wireStaticUI() {
   $("#account-btn").addEventListener("click", openAccountModal);
   $("#account-close").addEventListener("click", () => hide($("#account-modal")));
   wireProvidersModal();
+  $("#movie-modal-close").addEventListener("click", closeMovieModal);
   // Escape closes whichever modal is open.
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    if (!$("#providers-modal").classList.contains("hidden")) {
+    if (!$("#movie-modal").classList.contains("hidden")) {
+      closeMovieModal();
+    } else if (!$("#providers-modal").classList.contains("hidden")) {
       closeProvidersModal();
     } else if (!$("#account-modal").classList.contains("hidden")) {
       hide($("#account-modal"));
@@ -633,6 +636,19 @@ function renderFilmCard() {
     });
     const ep = card.querySelector("[data-edit-prov]");
     if (ep) ep.addEventListener("click", () => openProvidersEditor(ep.dataset.editProv));
+    // Tap the poster or title for the full details popup.
+    if (tmdbEnabled) {
+      card.querySelectorAll(".film-poster, .film-title").forEach((el) => {
+        el.classList.add("tappable");
+        el.setAttribute("role", "button");
+        el.setAttribute("tabindex", "0");
+        el.title = "More about this film";
+        el.addEventListener("click", () => openMovieDetail(movie));
+        el.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openMovieDetail(movie); }
+        });
+      });
+    }
     if (isSpinner) {
       $("#deadline-input").addEventListener("change", (e) => {
         const d = new Date(e.target.value + "T20:00:00");
@@ -944,6 +960,69 @@ function wireProvidersModal() {
     closeProvidersModal();
   });
   $("#providers-close").addEventListener("click", closeProvidersModal);
+}
+
+// ---- movie details popup ----------------------------------------------------
+let movieDetailReq = 0;
+
+async function openMovieDetail(movie) {
+  if (!tmdbEnabled) return;
+  const token = ++movieDetailReq;
+  const body = $("#movie-modal-body");
+  body.innerHTML = `<p class="muted">Loading…</p>`;
+  show($("#movie-modal"));
+  const id = await filmTmdbId(movie);
+  const d = id ? await getMovieDetail(id) : null;
+  if (token !== movieDetailReq) return; // closed or superseded while loading
+  if (!d) {
+    body.innerHTML = `<h2 id="movie-modal-title">${esc(movie.title || "Film")}</h2>
+      <p class="muted">Couldn't find extra details for this film.</p>`;
+    return;
+  }
+  body.innerHTML = movieDetailHtml(d, movie);
+}
+
+function fmtRuntime(min) {
+  const h = Math.floor(min / 60), m = min % 60;
+  return h ? `${h}h ${m}m` : `${m}m`;
+}
+
+function movieDetailHtml(d, movie) {
+  const poster = d.posterPath
+    ? `<img class="movie-detail-poster" src="${esc(posterUrl(d.posterPath, "w185"))}" alt="" />` : "";
+  const meta = [
+    d.year || "",
+    typeof d.runtime === "number" && d.runtime > 0 ? fmtRuntime(d.runtime) : "",
+    d.genres && d.genres.length ? d.genres.slice(0, 3).join(", ") : "",
+  ].filter(Boolean).map(esc).join("  ·  ");
+  const rating = d.voteAverage ? `<div class="muted small">TMDB ${d.voteAverage.toFixed(1)}/10</div>` : "";
+  const tagline = d.tagline ? `<p class="movie-tagline muted">${esc(d.tagline)}</p>` : "";
+  const overview = d.overview
+    ? `<p class="movie-overview">${esc(d.overview)}</p>`
+    : `<p class="muted">No description available.</p>`;
+  const director = d.directors && d.directors.length
+    ? `<p class="movie-credits"><b>Director:</b> ${d.directors.map(esc).join(", ")}</p>` : "";
+  const cast = d.cast && d.cast.length
+    ? `<p class="movie-credits"><b>Cast:</b> ${d.cast.map(esc).join(", ")}</p>` : "";
+  return `
+    <div class="movie-detail-head">
+      ${poster}
+      <div class="movie-detail-meta">
+        <h2 id="movie-modal-title">${esc(d.title || movie.title || "")}</h2>
+        ${meta ? `<div class="muted small">${meta}</div>` : ""}
+        ${rating}
+        ${tagline}
+      </div>
+    </div>
+    ${overview}
+    ${director}
+    ${cast}
+    <p class="muted small movie-attr">Details from TMDB.</p>`;
+}
+
+function closeMovieModal() {
+  movieDetailReq++; // invalidate any in-flight load
+  hide($("#movie-modal"));
 }
 
 function posterThumb(m, size = "w92") {
