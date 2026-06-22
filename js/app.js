@@ -693,8 +693,8 @@ function renderMoviesTab() {
         <span class="movie-main">
           <span class="movie-title">${esc(m.title)}${m.year ? ` <span class="muted small">(${esc(m.year)})</span>` : ""}</span>
           <span class="movie-by muted small">added by ${esc(m.addedByName || "?")}</span>
+          ${tmdbEnabled ? `<span class="movie-avail small" data-mid="${m.id}"></span>` : ""}
         </span>
-        ${tmdbEnabled ? `<span class="avail" data-mid="${m.id}"></span>` : ""}
         ${m.addedByMemberId === myId ? `<button class="link-btn" data-remove="${m.id}" title="Remove">Remove</button>` : ""}
       </li>`
     )
@@ -765,27 +765,33 @@ function renderMoviesTab() {
   if (tmdbEnabled) wireTmdbAutocomplete(input);
 }
 
-// Annotate each wheel film with who-can-watch coverage, compared against the
-// members who've set their streaming services. Lazy + cached per film; quietly
-// does nothing until at least one member has picked services.
+// Annotate each wheel film with where it streams, and — once members have set
+// their streaming services — how many of them are covered. Lazy + cached per
+// film. Runs for every film, services or not, so the info shows up right away.
 async function fillWheelAvailability(movies) {
   const withSvc = state.members.filter((m) => Array.isArray(m.services) && m.services.length);
-  if (!withSvc.length) return;
   for (const m of movies) {
     const data = await filmProviders(m);
-    const el = document.querySelector(`.avail[data-mid="${m.id}"]`);
+    const el = document.querySelector(`.movie-avail[data-mid="${m.id}"]`);
     if (!el) continue; // tab re-rendered
-    const names = (data?.providers || []).map((p) => p.name);
-    if (!names.length) { el.className = "avail"; el.textContent = ""; continue; }
-    const cant = withSvc.filter((mem) => !canStream(mem.services, names));
-    if (!cant.length) {
-      el.className = "avail ok";
-      el.textContent = "Everyone can watch";
-    } else {
-      el.className = "avail warn";
-      el.textContent = `${withSvc.length - cant.length}/${withSvc.length} can watch`;
-      el.title = "Not on their services: " + cant.map((mem) => mem.name || "Someone").join(", ");
+    el.title = "";
+    if (!data) { el.className = "movie-avail small muted"; el.textContent = ""; continue; }
+    const names = data.providers.map((p) => p.name);
+    if (!names.length) {
+      el.className = "movie-avail small muted";
+      el.textContent = "Not on subscription streaming in your region";
+      continue;
     }
+    const shown = names.slice(0, 3).join(", ") + (names.length > 3 ? ` +${names.length - 3}` : "");
+    if (!withSvc.length) {
+      el.className = "movie-avail small muted";
+      el.textContent = "Streaming on " + shown;
+      continue;
+    }
+    const cant = withSvc.filter((mem) => !canStream(mem.services, names));
+    el.className = cant.length ? "movie-avail small warn" : "movie-avail small ok";
+    el.textContent = `Streaming on ${shown} — ${cant.length ? `${withSvc.length - cant.length}/${withSvc.length}` : "everyone"} can watch`;
+    if (cant.length) el.title = "Can't watch: " + cant.map((mem) => mem.name || "Someone").join(", ");
   }
 }
 
@@ -812,11 +818,13 @@ async function filmTmdbId(movie) {
 const providerCache = {};
 async function filmProviders(movie) {
   const id = await filmTmdbId(movie);
-  if (!id) return null;
+  if (!id) return null; // couldn't identify the film at all
   if (providerCache[id] === undefined) {
     providerCache[id] = await getWatchProviders(id, watchRegion());
   }
-  return providerCache[id];
+  // Normalise "identified, but no providers for this region" to an empty list
+  // (distinct from null = unidentified) so callers can say so explicitly.
+  return providerCache[id] || { providers: [], link: "" };
 }
 
 // "Where to watch" + "Who can watch" — injected into the film-of-the-week card.
