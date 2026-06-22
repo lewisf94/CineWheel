@@ -103,10 +103,56 @@ function burstConfetti() {
 }
 
 // ---- drawing ---------------------------------------------------------------
+function pageBg() {
+  try { return getComputedStyle(document.body).backgroundColor || "#ffffff"; }
+  catch (_) { return "#ffffff"; }
+}
+
+// Punch round holes around a radius (filled with the page bg so they read as cut
+// through) — this is what gives the wheel its film-reel character.
+function drawHoles(ctx, cx, cy, radius, holeR, count, fill, edge, rot) {
+  for (let k = 0; k < count; k++) {
+    const a = (rot || 0) + (k / count) * 2 * Math.PI;
+    const x = cx + radius * Math.cos(a), y = cy + radius * Math.sin(a);
+    ctx.beginPath();
+    ctx.arc(x, y, holeR, 0, 2 * Math.PI);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    if (edge) { ctx.lineWidth = 1.5; ctx.strokeStyle = edge; ctx.stroke(); }
+  }
+}
+
+// The reel's outer band: a thick rim with sprocket holes, between rSeg and rOuter.
+function drawReelRim(ctx, cx, cy, rSeg, rOuter, s, bg, rot) {
+  const band = rOuter - rSeg;
+  ctx.beginPath();
+  ctx.arc(cx, cy, (rSeg + rOuter) / 2, 0, 2 * Math.PI);
+  ctx.strokeStyle = s.ring; ctx.lineWidth = band; ctx.stroke();
+  drawHoles(ctx, cx, cy, (rSeg + rOuter) / 2, band * 0.3, 16, bg, s.ring, rot);
+  ctx.beginPath(); ctx.arc(cx, cy, rOuter, 0, 2 * Math.PI);
+  ctx.strokeStyle = s.ring; ctx.lineWidth = s.ringW; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, rSeg, 0, 2 * Math.PI);
+  ctx.strokeStyle = s.ring; ctx.lineWidth = s.ringW; ctx.stroke();
+}
+
+// The reel hub: a centre cap ringed with small holes, plus a spindle.
+function drawReelHub(ctx, cx, cy, s, bg, rot) {
+  ctx.beginPath(); ctx.arc(cx, cy, s.hubR, 0, 2 * Math.PI);
+  ctx.fillStyle = s.hubFill; ctx.fill();
+  ctx.strokeStyle = s.hubStroke; ctx.lineWidth = 3; ctx.stroke();
+  drawHoles(ctx, cx, cy, s.hubR * 0.58, Math.max(2, s.hubR * 0.17), 6, bg, null, rot);
+  ctx.beginPath(); ctx.arc(cx, cy, Math.max(2, s.hubR * 0.2), 0, 2 * Math.PI);
+  ctx.fillStyle = s.hubStroke; ctx.fill();
+}
+
 function drawWheel(ctx, size, segments, rotation, highlightIndex) {
   const s = wheelStyle();
   const n = segments.length;
-  const cx = size / 2, cy = size / 2, r = size / 2 - 8;
+  const cx = size / 2, cy = size / 2;
+  const rOuter = size / 2 - 6;
+  const band = Math.max(16, size * 0.05);
+  const rSeg = rOuter - band;        // the segmented disc sits inside the reel rim
+  const bg = pageBg();
   const seg = (2 * Math.PI) / n;
   ctx.clearRect(0, 0, size, size);
   ctx.lineJoin = "round";
@@ -119,7 +165,7 @@ function drawWheel(ctx, size, segments, rotation, highlightIndex) {
 
     ctx.beginPath();
     ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, r, a0, a1);
+    ctx.arc(cx, cy, rSeg, a0, a1);
     ctx.closePath();
     ctx.fillStyle = fill;
     ctx.fill();
@@ -143,32 +189,19 @@ function drawWheel(ctx, size, segments, rotation, highlightIndex) {
     ctx.font = s.labelFont;
     let title = segments[i].title || "";
     if (s.upper) title = title.toUpperCase();
-    const label = title.length > 18 ? title.slice(0, 17) + "…" : title;
+    const label = title.length > 16 ? title.slice(0, 15) + "…" : title;
 
     let lc, ls;
     if (s.alternate) { lc = isDark(fill) ? "#ffffff" : "#0a0a0a"; ls = null; }
     else { lc = s.labelColor; ls = s.labelStroke; }
-    if (ls) { ctx.lineWidth = 3; ctx.strokeStyle = ls; ctx.strokeText(label, r - 14, 0); }
+    if (ls) { ctx.lineWidth = 3; ctx.strokeStyle = ls; ctx.strokeText(label, rSeg - 14, 0); }
     ctx.fillStyle = lc;
-    ctx.fillText(label, r - 14, 0);
+    ctx.fillText(label, rSeg - 14, 0);
     ctx.restore();
   }
 
-  // outer ring
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-  ctx.strokeStyle = s.ring;
-  ctx.lineWidth = s.ringW;
-  ctx.stroke();
-
-  // hub
-  ctx.beginPath();
-  ctx.arc(cx, cy, s.hubR, 0, 2 * Math.PI);
-  ctx.fillStyle = s.hubFill;
-  ctx.fill();
-  ctx.strokeStyle = s.hubStroke;
-  ctx.lineWidth = 3;
-  ctx.stroke();
+  drawReelRim(ctx, cx, cy, rSeg, rOuter, s, bg, rotation);
+  drawReelHub(ctx, cx, cy, s, bg, rotation);
 }
 
 function drawPointer(ctx, size) {
@@ -197,17 +230,20 @@ export function renderIdleWheel(canvas, movies) {
   const ctx = setupHiDPI(canvas, size);
   if (!movies.length) {
     ctx.clearRect(0, 0, size, size);
+    const cx = size / 2, cy = size / 2;
+    const rOuter = size / 2 - 6;
+    const rSeg = rOuter - Math.max(16, size * 0.05);
+    const bg = pageBg();
     ctx.fillStyle = s.emptyFill;
     ctx.beginPath();
-    ctx.arc(size / 2, size / 2, size / 2 - 8, 0, 2 * Math.PI);
+    ctx.arc(cx, cy, rSeg, 0, 2 * Math.PI);
     ctx.fill();
-    ctx.strokeStyle = s.ring;
-    ctx.lineWidth = s.ringW;
-    ctx.stroke();
+    drawReelRim(ctx, cx, cy, rSeg, rOuter, s, bg, 0);
+    drawReelHub(ctx, cx, cy, s, bg, 0);
     ctx.fillStyle = s.emptyText;
     ctx.font = "16px system-ui, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("Add films to fill the wheel", size / 2, size / 2);
+    ctx.fillText("Add films to fill the wheel", cx, cy - s.hubR - 22);
     return;
   }
   drawWheel(ctx, size, movies.map((m) => ({ id: m.id, title: m.title })), 0, -1);
