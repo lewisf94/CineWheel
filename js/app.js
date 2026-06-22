@@ -621,10 +621,14 @@ function renderFilmCard() {
     const rb = $("#rate-btn");
     if (rb) rb.addEventListener("click", () => {
       switchTab("history");
-      // Bring the rating section to the top of the screen.
+      // Scroll the page so the rating (pending) card sits at the top, just below
+      // the sticky header (whose height varies — it wraps on mobile).
       requestAnimationFrame(() => {
-        ($("#tab-history .pending-card") || $("#tab-history"))
-          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        const el = $("#tab-history .pending-card");
+        if (!el) return;
+        const header = document.querySelector(".topbar");
+        const offset = (header ? header.offsetHeight : 60) + 10;
+        window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - offset, behavior: "smooth" });
       });
     });
     const ep = card.querySelector("[data-edit-prov]");
