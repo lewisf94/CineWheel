@@ -11,7 +11,7 @@ import {
   createGroup, joinGroup, currentSpinnerId, normaliseCode,
   requestReset, approveReset, cancelReset, performReset, setMyServices,
 } from "./groups.js";
-import { addMovie, removeMovie, commitSpin, markWatchedAck, finalizeRound, setDeadline } from "./movies.js";
+import { addMovie, removeMovie, commitSpin, markWatchedAck, finalizeRound, setDeadline, setMovieServices } from "./movies.js";
 import {
   renderIdleWheel, chooseWinnerIndex, maybePlaySpin, setMuted, isMuted, resumeAudio,
 } from "./wheel.js";
@@ -127,10 +127,13 @@ function wireStaticUI() {
   $("#name-input").addEventListener("keydown", (e) => e.key === "Enter" && saveName());
   $("#account-btn").addEventListener("click", openAccountModal);
   $("#account-close").addEventListener("click", () => hide($("#account-modal")));
+  wireProvidersModal();
   // Escape closes whichever modal is open.
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    if (!$("#account-modal").classList.contains("hidden")) {
+    if (!$("#providers-modal").classList.contains("hidden")) {
+      closeProvidersModal();
+    } else if (!$("#account-modal").classList.contains("hidden")) {
       hide($("#account-modal"));
     } else if (!$("#name-modal").classList.contains("hidden")) {
       hide($("#name-modal"));
@@ -571,7 +574,8 @@ function renderFilmCard() {
       ${movie.posterPath ? `<img class="film-poster" src="${esc(posterUrl(movie.posterPath, "w185"))}" alt="" loading="lazy" />` : ""}
       <h1 class="film-title">${esc(cf.title)}</h1>
       ${metaBits ? `<div class="film-tmdb muted small">${esc(metaBits)}</div>` : ""}
-      ${tmdbEnabled ? `<div id="watch-providers" class="watch-providers"></div><div id="who-can-watch" class="who-can-watch"></div>` : ""}
+      ${tmdbEnabled ? `<div id="watch-providers" class="watch-providers"></div><div id="who-can-watch" class="who-can-watch"></div>
+      <button type="button" class="text-link edit-prov-link" data-edit-prov="${esc(cf.movieId)}">Streaming info wrong? Fix it</button>` : ""}
       <div class="film-meta">
         <span>picked by <b>${esc(cf.spinnerName || "—")}</b></span>
         <span>added by <b>${esc(cf.addedByName || "—")}</b></span>
@@ -596,6 +600,8 @@ function renderFilmCard() {
     if (wb) wb.addEventListener("click", () => markWatchedAck(state.code, cf.movieId, myId));
     const rb = $("#rate-btn");
     if (rb) rb.addEventListener("click", () => switchTab("history"));
+    const ep = card.querySelector("[data-edit-prov]");
+    if (ep) ep.addEventListener("click", () => openProvidersEditor(ep.dataset.editProv));
     if (isSpinner) {
       $("#deadline-input").addEventListener("change", (e) => {
         const d = new Date(e.target.value + "T20:00:00");
@@ -695,6 +701,7 @@ function renderMoviesTab() {
           <span class="movie-by muted small">added by ${esc(m.addedByName || "?")}</span>
           ${tmdbEnabled ? `<span class="movie-avail small" data-mid="${m.id}"></span>` : ""}
         </span>
+        ${tmdbEnabled ? `<button class="link-btn" data-edit-prov="${m.id}" title="Correct where to watch">Fix streaming</button>` : ""}
         ${m.addedByMemberId === myId ? `<button class="link-btn" data-remove="${m.id}" title="Remove">Remove</button>` : ""}
       </li>`
     )
@@ -751,6 +758,10 @@ function renderMoviesTab() {
     providerCache = {}; // cached providers were region-specific — refetch
     render();
   });
+
+  pane.querySelectorAll("[data-edit-prov]").forEach((b) =>
+    b.addEventListener("click", () => openProvidersEditor(b.dataset.editProv))
+  );
 
   if (tmdbEnabled) fillWheelAvailability(movies);
 
@@ -833,6 +844,59 @@ async function fillAutocompleteAvailability(results, q, input) {
   }
 }
 
+// ---- where-to-watch correction (club override of stale JustWatch data) ------
+let editingProvMovieId = null;
+
+// Open the editor for a film, pre-ticked from any existing club override or,
+// failing that, JustWatch's current guess (which the user then corrects).
+async function openProvidersEditor(movieId) {
+  const movie = state.movies.find((m) => m.id === movieId);
+  if (!movie) return;
+  editingProvMovieId = movieId;
+  $("#providers-modal-sub").textContent = movie.title || "";
+  const grid = $("#providers-modal-grid");
+  grid.innerHTML = `<span class="muted small">Loading…</span>`;
+  show($("#providers-modal"));
+
+  const preselected = Array.isArray(movie.serviceOverride)
+    ? movie.serviceOverride
+    : serviceIdsFromProviders(
+        ((await filmProviders({ tmdbId: movie.tmdbId, title: movie.title })) || {}).providers?.map((p) => p.name) || []
+      );
+  if (editingProvMovieId !== movieId) return; // closed/changed while loading
+
+  grid.innerHTML = STREAMING_SERVICES
+    .map((s) => `<button type="button" class="svc-chip${preselected.includes(s.id) ? " on" : ""}" data-svc="${s.id}" aria-pressed="${preselected.includes(s.id)}">${esc(s.name)}</button>`)
+    .join("");
+  grid.querySelectorAll("[data-svc]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const on = !b.classList.contains("on");
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-pressed", String(on));
+    })
+  );
+}
+
+function closeProvidersModal() {
+  editingProvMovieId = null;
+  hide($("#providers-modal"));
+}
+
+function wireProvidersModal() {
+  $("#providers-save").addEventListener("click", () => {
+    if (!editingProvMovieId) return;
+    const ids = [...$("#providers-modal-grid").querySelectorAll(".svc-chip.on")].map((x) => x.dataset.svc);
+    setMovieServices(state.code, editingProvMovieId, ids);
+    closeProvidersModal();
+  });
+  $("#providers-reset").addEventListener("click", () => {
+    if (!editingProvMovieId) return;
+    setMovieServices(state.code, editingProvMovieId, null); // back to JustWatch
+    closeProvidersModal();
+  });
+  $("#providers-close").addEventListener("click", closeProvidersModal);
+}
+
 function posterThumb(m, size = "w92") {
   const url = m.posterPath ? posterUrl(m.posterPath, size) : "";
   return url ? `<img class="poster-thumb" src="${esc(url)}" alt="" loading="lazy" />` : "";
@@ -856,6 +920,14 @@ async function filmTmdbId(movie) {
 // tmdb id only, so it's reset (below) whenever the region changes.
 let providerCache = {};
 async function filmProviders(movie) {
+  // A club-set override wins over (often stale/wrong) JustWatch data.
+  if (Array.isArray(movie.serviceOverride)) {
+    return {
+      providers: movie.serviceOverride.map((id) => ({ name: SERVICE_NAME[id] || id, logo: "" })),
+      link: "",
+      source: "club",
+    };
+  }
   const id = await filmTmdbId(movie);
   if (!id) return null; // couldn't identify the film at all
   if (providerCache[id] === undefined) {
@@ -863,7 +935,17 @@ async function filmProviders(movie) {
   }
   // Normalise "identified, but no providers for this region" to an empty list
   // (distinct from null = unidentified) so callers can say so explicitly.
-  return providerCache[id] || { providers: [], link: "" };
+  return { ...(providerCache[id] || { providers: [], link: "" }), source: "justwatch" };
+}
+
+// Our streaming-service vocabulary, derived from STREAMING_SERVICES: an id->name
+// lookup, and a best-guess mapping of raw TMDB provider names onto our ids (used
+// to pre-fill the correction editor from JustWatch's current guess).
+const SERVICE_NAME = Object.fromEntries(STREAMING_SERVICES.map((s) => [s.id, s.name]));
+function serviceIdsFromProviders(names) {
+  return STREAMING_SERVICES
+    .filter((s) => (names || []).some((p) => s.match.some((t) => String(p).toLowerCase().includes(t))))
+    .map((s) => s.id);
 }
 
 // "Where to watch" + "Who can watch" — injected into the film-of-the-week card.
@@ -877,6 +959,9 @@ async function renderFilmAvailability(movie) {
 
 function watchProvidersHtml(data) {
   if (!data || !data.providers.length) return "";
+  const attr = data.source === "club"
+    ? `<div class="watch-attr muted small">Corrected by your club</div>`
+    : `<div class="watch-attr muted small">Streaming data by JustWatch${data.link ? ` &middot; <a href="${esc(data.link)}" target="_blank" rel="noopener">details</a>` : ""}</div>`;
   return `
     <div class="watch-label muted small">Where to watch</div>
     <div class="watch-logos">${data.providers
@@ -885,7 +970,7 @@ function watchProvidersHtml(data) {
         ? `<img class="watch-logo" src="${esc(posterUrl(p.logo, "w45"))}" alt="${esc(p.name)}" title="${esc(p.name)}" loading="lazy" />`
         : `<span class="watch-name">${esc(p.name)}</span>`)
       .join("")}</div>
-    <div class="watch-attr muted small">Streaming data by JustWatch${data.link ? ` &middot; <a href="${esc(data.link)}" target="_blank" rel="noopener">details</a>` : ""}</div>`;
+    ${attr}`;
 }
 
 // Cross-reference the film's providers with each member's saved services to say

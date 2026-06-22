@@ -47,6 +47,15 @@ export async function removeMovie(code, movieId) {
   await deleteDoc(doc(db, "groups", code, "movies", movieId));
 }
 
+// Club-set "where to watch" override (service ids from STREAMING_SERVICES),
+// correcting wrong/stale JustWatch data. Pass null to clear it and fall back to
+// TMDB; pass [] to say "not on any subscription service".
+export async function setMovieServices(code, movieId, serviceIds) {
+  await updateDoc(doc(db, "groups", code, "movies", movieId), {
+    serviceOverride: Array.isArray(serviceIds) ? serviceIds : null,
+  });
+}
+
 // Record the result of a spin. The wheel `segments` + `winnerIndex` are stored
 // in lastSpin so every connected browser animates the exact same wheel, even
 // though the winner immediately leaves the "wheel" status. currentFilm is the
