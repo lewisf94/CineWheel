@@ -179,7 +179,7 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
 .tmdb-item-main { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .tmdb-item-title { font-weight: 600; }
 .tmdb-attribution { margin: 10px 0 0; }
-.film-poster { display: block; width: 120px; height: auto; border-radius: 6px; border: 1px solid var(--line); margin: 0 auto 14px; }
+.film-poster { display: block; width: 120px; height: auto; border-radius: 6px; border: 1px solid var(--line); margin: 18px auto 14px; }
 .film-tmdb { margin: 4px 0 0; }
 .watch-providers:empty { display: none; }
 .watch-providers { margin: 14px 0 2px; }
@@ -217,7 +217,7 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
 .tmdb-item-avail.warn { color: #9a6a06; }
 .watched-card .poster-thumb { float: left; width: 52px; height: 78px; margin: 2px 14px 6px 0; }
 .watched-card::after { content: ""; display: block; clear: both; }
-[data-theme="a24"] .film-poster { margin: 0 auto 16px; }
+[data-theme="a24"] .film-poster { margin: 18px auto 16px; }
 
 /* ---- ratings / history ---- */
 .pending-card { border-color: var(--line-strong); scroll-margin-top: 84px; }
