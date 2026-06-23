@@ -58,9 +58,11 @@ console: Firestore created, the rules from `firestore.rules` published, and
 - **Vanilla DOM.** Rendering is `innerHTML` templates + `addEventListener` in
   `app.js`. Escape user input with the local `esc()` helper before interpolating.
 - **Themes are per-user** (localStorage `spinema_theme`), never in Firestore.
-  Four: `a24` (Default), `festival` (Cinema), `strokes` (Web 1.0), `noir` (Dark).
-  A theme is a CSS `[data-theme="…"]` block **plus** a matching branch in
-  `wheelStyle()` in `wheel.js`.
+  Three: `a24` (Default), `festival` (Cinema), `strokes` (Web 1.0) — each with a
+  **light/dark mode** via a separate `[data-mode]` toggle (localStorage
+  `spinema_mode`). A theme is a CSS `[data-theme="…"]` block (+ optional
+  `[data-theme][data-mode="dark"]` overrides) **plus** a matching branch in
+  `wheelStyle()` in `wheel.js` (with a dark patch when needed).
 
 ## Checks (no test suite)
 

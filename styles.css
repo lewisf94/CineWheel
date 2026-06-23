@@ -390,7 +390,7 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
 [data-theme="a24"] .film-card { text-align: left; padding: 36px 30px; }
 [data-theme="a24"] .film-title { font-size: 2.7rem; }
 [data-theme="a24"] .film-meta, [data-theme="a24"] .deadline-row,
-[data-theme="a24"] .round-progress, [data-theme="a24"] .watch-actions { justify-content: flex-start; }
+[data-theme="a24"] .round-progress, [data-theme="a24"] .watch-actions, [data-theme="a24"] .cal-row { justify-content: flex-start; }
 [data-theme="a24"] .film-banner { display: block; border-bottom: 1px solid #111; padding-bottom: 10px; margin-bottom: 4px; }
 [data-theme="a24"] .rp-count { font-size: 2.1rem; }
 /* hairline cards, no shadow, square */
@@ -559,18 +559,47 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
 }
 [data-theme="strokes"] .start-menu button:hover { background: #000080; color: #ffffff; }
 
-/* ---- Dark theme: clean dark variant of the Default layout ---- */
-[data-theme="noir"] {
-  --bg: #0e0f13; --bg-soft: #16181f; --panel: #16181f; --panel-2: #1d2029;
-  --line: #2a2e39; --line-strong: #3a3f4d; --text: #e8e9ec; --muted: #9aa0ab;
-  --faint: #5f6675; --accent: #e7b85c; --accent-hi: #f0c873; --accent-ink: #14151a;
+/* ===========================================================================
+   DARK MODE — a [data-mode="dark"] variant for each theme (toggled separately)
+   =========================================================================== */
+[data-mode="dark"] .spoiler { background: #c7ccd6; }
+[data-mode="dark"] .watch-logo, [data-mode="dark"] .rec-poster { background: var(--panel-2); }
+
+/* Default — monochrome, inverted */
+[data-theme="a24"][data-mode="dark"] {
+  --bg: #0e0f13; --bg-soft: #16181f; --panel: #14151a; --panel-2: #1d2029;
+  --line: #3a3f4d; --line-strong: #6b7280; --text: #f0f1f3; --muted: #9aa0ab;
+  --faint: #5f6675; --accent: #f0f1f3; --accent-hi: #ffffff; --accent-ink: #0e0f13;
   --danger: #ef6b62; --star-empty: #3a3f4d; --topbar-bg: rgba(14, 15, 19, 0.92);
-  --radius: 10px;
 }
-[data-theme="noir"] body { background: var(--bg); }
-[data-theme="noir"] .btn:hover { color: var(--accent); border-color: var(--accent); }
-[data-theme="noir"] .watch-logo, [data-theme="noir"] .rec-poster { background: var(--panel-2); }
-[data-theme="noir"] .spoiler { background: #c7ccd6; }
+[data-theme="a24"][data-mode="dark"] .topbar,
+[data-theme="a24"][data-mode="dark"] .film-banner,
+[data-theme="a24"][data-mode="dark"] .tabs { border-color: var(--line); }
+[data-theme="a24"][data-mode="dark"] .btn { border-color: var(--line-strong); }
+[data-theme="a24"][data-mode="dark"] .btn:hover { color: var(--accent); border-color: var(--accent); }
+[data-theme="a24"][data-mode="dark"] .btn.primary,
+[data-theme="a24"][data-mode="dark"] .btn.primary:hover { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+[data-theme="a24"][data-mode="dark"] a,
+[data-theme="a24"][data-mode="dark"] .text-link { color: var(--text); }
+[data-theme="a24"][data-mode="dark"] .tab.active { color: var(--text); border-bottom-color: var(--text); }
+[data-theme="a24"][data-mode="dark"] #wheel-canvas { border-color: var(--line); }
+
+/* Cinema — dark warm paper, same red/gold ink */
+[data-theme="festival"][data-mode="dark"] {
+  --bg: #241d15; --bg-soft: #2c241a; --panel: #2c241a; --panel-2: #362b1f;
+  --line: #5a4d36; --line-strong: #d8c9a6; --text: #efe4ce; --muted: #b7a986;
+  --faint: #8a7c5e; --accent: #e0673f; --accent-hi: #ec7a52; --accent-ink: #f6efdd;
+  --danger: #e8745c; --star-empty: #5a4d36; --topbar-bg: rgba(36, 29, 21, 0.95);
+}
+[data-theme="festival"][data-mode="dark"] body { background: var(--bg); }
+
+/* Web 1.0 — a dark desktop; the Win95 windows stay light by design */
+[data-theme="strokes"][data-mode="dark"] { --bg: #05083a; }
+[data-theme="strokes"][data-mode="dark"] body {
+  background-color: #05083a;
+  background-image: repeating-conic-gradient(#05083a 0% 25%, #0a0e5a 0% 50%);
+  background-size: 6px 6px;
+}
 
 /* ===========================================================================
    Mobile / responsive — sits last so it applies across every theme
@@ -596,7 +625,7 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
   [data-theme="a24"] .hero h1 { font-size: 2.2rem; }
   [data-theme="a24"] .film-card { text-align: center; }
   [data-theme="a24"] .film-meta, [data-theme="a24"] .deadline-row,
-  [data-theme="a24"] .round-progress, [data-theme="a24"] .watch-actions { justify-content: center; }
+  [data-theme="a24"] .round-progress, [data-theme="a24"] .watch-actions, [data-theme="a24"] .cal-row { justify-content: center; }
   .lead { font-size: 1rem; }
   .film-title { font-size: 1.6rem; }
   [data-theme="a24"] .film-title { font-size: 1.7rem; }

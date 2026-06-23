@@ -654,7 +654,7 @@ function renderFilmCard() {
         <span class="deadline-pill" id="countdown">${countdownText(countdownDeadline)}</span>
         <span class="muted small">watch by ${new Date(countdownDeadline).toLocaleDateString()}</span>
       </div>
-      <div class="cal-row"><button type="button" class="text-link" id="add-cal">Add to calendar</button> <a class="text-link" id="add-gcal" target="_blank" rel="noopener">Google Calendar</a></div>
+      <div class="cal-row"><span class="muted small">Add deadline to:</span> <button type="button" class="text-link" id="add-cal">Apple / Outlook</button> <a class="text-link" id="add-gcal" target="_blank" rel="noopener">Google</a></div>
       ${isSpinner ? `<div class="deadline-edit"><label class="small muted">Change deadline</label><input type="date" id="deadline-input" value="${dateInputValue(countdownDeadline)}"></div>` : ""}
       <div class="round-progress">
         <div class="rp-item"><div class="rp-count">${rs.watchedCount}<span class="of"> / ${rs.total}</span></div><div class="rp-label">Watched</div></div>

@@ -36,18 +36,20 @@ function wheelStyle() {
       labelColor: "#ffffff", labelStroke: "#000000",
       emptyText: "#ffffff", emptyFill: "rgba(255,255,255,0.14)",
     },
-    // Dark: warm gold + muted colours on near-black, light outlined labels
-    noir: {
-      palette: ["#e7b85c", "#c2482e", "#3fa39b", "#7a6cc4", "#d98c3c", "#5a8f5a"],
-      segStroke: "#0e0f13", segStrokeW: 2, ring: "#3a3f4d", ringW: 2,
-      hubFill: "#16181f", hubStroke: "#e7b85c", hubR: 18,
-      pointerFill: "#e7b85c", pointerStroke: "#0e0f13", pointerW: 16,
-      labelFont: '700 14px "Archivo", system-ui, sans-serif', upper: false,
-      labelColor: "#ffffff", labelStroke: "#0e0f13",
+  };
+  // Per-theme dark-mode patches, merged over the light style when [data-mode="dark"].
+  const darkPatch = {
+    a24: {
+      alternate: ["#e8e9ec", "#2a2e39"], segStroke: "#0e0f13", ring: "#5b6270",
+      hubFill: "#14151a", hubStroke: "#f0f1f3", pointerFill: "#f0f1f3", pointerStroke: "#0e0f13",
       emptyText: "#9aa0ab", emptyFill: "rgba(255,255,255,0.05)",
     },
+    festival: { ring: "#6e5f44", emptyText: "#b7a986", emptyFill: "rgba(255,255,255,0.05)" },
+    strokes: {}, // wheel sits in a light Win95 window — unchanged
   };
-  return styles[t] || styles.a24;
+  const base = styles[t] || styles.a24;
+  const dark = document.documentElement.getAttribute("data-mode") === "dark";
+  return dark ? { ...base, ...(darkPatch[t] || {}) } : base;
 }
 
 function isDark(hex) {

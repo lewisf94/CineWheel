@@ -1,31 +1,69 @@
 // ============================================================================
-//  Theme switcher — three complete design systems, remembered in localStorage.
-//  Each look is defined entirely in CSS under [data-theme="…"] (plus a matching
-//  wheel style in wheel.js). This module toggles the attribute on <html>, builds
-//  the picker, and fires "spinema:themechange" so the app can redraw the wheel.
+//  Theme switcher — three design systems, EACH with a light + dark mode.
+//  The look is a CSS [data-theme="…"] block (+ a wheel style in wheel.js); the
+//  light/dark mode is a separate [data-mode] attribute, toggled independently.
+//  Both are remembered in localStorage; changing either fires
+//  "spinema:themechange" so the app redraws the wheel.
 // ============================================================================
 
 const THEMES = [
-  { id: "a24",      name: "Default", bg: "#ffffff", accent: "#0a0a0a" },
-  { id: "festival", name: "Cinema",  bg: "#ece2cd", accent: "#c2482e" },
-  { id: "strokes",  name: "Web 1.0", bg: "#0a1aa8", accent: "#cc1f1f" },
-  { id: "noir",     name: "Dark",    bg: "#0e0f13", accent: "#e7b85c" },
+  { id: "a24",      name: "Default", bg: "#ffffff", darkBg: "#0e0f13", accent: "#0a0a0a" },
+  { id: "festival", name: "Cinema",  bg: "#ece2cd", darkBg: "#241d15", accent: "#c2482e" },
+  { id: "strokes",  name: "Web 1.0", bg: "#0a1aa8", darkBg: "#05083a", accent: "#cc1f1f" },
 ];
 const KEY = "spinema_theme";
+const MODE_KEY = "spinema_mode";
 const DEFAULT = "a24";
 
 function saved() {
-  try { return localStorage.getItem(KEY) || localStorage.getItem("cinewheel_theme") || DEFAULT; } catch (_) { return DEFAULT; }
+  try {
+    const id = localStorage.getItem(KEY) || localStorage.getItem("cinewheel_theme") || DEFAULT;
+    return THEMES.some((t) => t.id === id) ? id : DEFAULT; // old "noir" -> default
+  } catch (_) { return DEFAULT; }
 }
 function remember(id) { try { localStorage.setItem(KEY, id); } catch (_) {} }
+function savedMode() {
+  try { return localStorage.getItem(MODE_KEY) === "dark" ? "dark" : "light"; } catch (_) { return "light"; }
+}
+function rememberMode(m) { try { localStorage.setItem(MODE_KEY, m); } catch (_) {} }
+
+const root = document.documentElement;
+const curTheme = () => root.getAttribute("data-theme") || DEFAULT;
+const isDarkMode = () => root.getAttribute("data-mode") === "dark";
+
+// Keep the browser/PWA chrome colour in step with theme + mode.
+function paintMeta() {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const t = THEMES.find((x) => x.id === curTheme());
+  if (meta && t) meta.setAttribute("content", isDarkMode() ? (t.darkBg || "#0e0f13") : t.bg);
+}
 
 function apply(id) {
   if (!THEMES.some((t) => t.id === id)) id = DEFAULT;
-  document.documentElement.setAttribute("data-theme", id);
-  const meta = document.querySelector('meta[name="theme-color"]');
-  const t = THEMES.find((x) => x.id === id);
-  if (meta && t) meta.setAttribute("content", t.bg);
+  root.setAttribute("data-theme", id);
+  paintMeta();
   window.dispatchEvent(new CustomEvent("spinema:themechange", { detail: id }));
+}
+function applyMode(m) {
+  root.setAttribute("data-mode", m === "dark" ? "dark" : "light");
+  paintMeta();
+  updateModeBtn();
+  window.dispatchEvent(new CustomEvent("spinema:themechange", { detail: curTheme() }));
+}
+
+function updateModeBtn() {
+  const btn = document.getElementById("mode-btn");
+  if (btn) btn.textContent = isDarkMode() ? "Light" : "Dark";
+}
+function wireMode() {
+  const btn = document.getElementById("mode-btn");
+  if (!btn) return;
+  updateModeBtn();
+  btn.addEventListener("click", () => {
+    const next = isDarkMode() ? "light" : "dark";
+    applyMode(next);
+    rememberMode(next);
+  });
 }
 
 function buildPicker() {
@@ -44,7 +82,7 @@ function buildPicker() {
   document.body.appendChild(pop);
 
   const mark = () => {
-    const cur = document.documentElement.getAttribute("data-theme");
+    const cur = curTheme();
     pop.querySelectorAll(".theme-opt").forEach((o) =>
       o.classList.toggle("active", o.dataset.themeId === cur)
     );
@@ -77,8 +115,10 @@ function buildPicker() {
 }
 
 apply(saved());
+applyMode(savedMode());
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", buildPicker);
+  document.addEventListener("DOMContentLoaded", () => { buildPicker(); wireMode(); });
 } else {
   buildPicker();
+  wireMode();
 }
