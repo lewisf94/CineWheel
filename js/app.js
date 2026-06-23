@@ -1041,8 +1041,9 @@ function renderMoviesTab() {
       <details class="lb-help muted small">
         <summary>How do I get the CSV?</summary>
         <ol>
-          <li>On <b>letterboxd.com</b> in a web browser (the export isn't in the phone app), open <b>Settings</b> &rarr; <b>Import &amp; Export</b>.</li>
-          <li>Click <b>Export Your Data</b> — it downloads a <code>.zip</code>.</li>
+          <li>On <b>letterboxd.com</b> in a web browser (the export isn't in the phone app), click your profile picture (top-right) &rarr; <b>Settings</b>.</li>
+          <li>On the Settings page find the <b>Data</b> section and click <b>Export Your Data</b>.</li>
+          <li>You'll get a <code>.zip</code> (straight away, or via an emailed link for big accounts).</li>
           <li>Unzip it and find <code>watchlist.csv</code> inside.</li>
           <li>Back here, choose that file with <b>Import the CSV</b> above.</li>
         </ol>
