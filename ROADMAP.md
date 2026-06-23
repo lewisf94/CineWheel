@@ -46,6 +46,46 @@ Working through these; **checked = shipped**. Pure front-end unless noted.
 ### Polish
 - [x] **Spoiler tags** in reviews (`||spoiler||`, click-to-reveal)
 - [x] **Dark mode** — a light/dark toggle (`[data-mode]`) that applies to every theme
+- [x] **"Only spin films everyone can stream" toggle** restyled as a themed pill (tokens only, fits all three themes + dark mode) instead of a bare browser checkbox.
+
+---
+
+## Security hardening (2026-06 review)
+
+From a full review of the rules + client. **Checked = code shipped** (rules still
+need **publishing** in the console). **[console]** = your action, no code.
+
+- [x] **SH-2. Enforce kicks/bans in the rules.** `kickMember` records `bannedUids`,
+  but `amJoining` never checked them — a kicked member could re-append their uid via a
+  direct API call. The join rule now denies any uid in `bannedUids` (both `firestore.rules`
+  and `functions/firestore.rules`). Still soft against a *fresh* anonymous uid (no stable
+  identity) — that needs server-side join, but a saved/known uid is now blocked.
+- [x] **SH-4. Append-only `memberOrder` on join.** `amJoining` constrained `memberUids`
+  tightly but let a joiner rewrite `memberOrder` to anything (scramble/wipe the turn order).
+  The rule now requires the new `memberOrder` to keep every existing entry and grow by at
+  most one.
+- [x] **SH-6. Size caps in the rules.** Added length/range validation so a member can't
+  stuff oversized docs: rating `score` must be a number 0.5–5, review ≤2000 chars, comment
+  text ≤2000, member/group name ≤200. Plus: the hardened rules were **missing a `comments`
+  match entirely** (comments would be denied in server-authoritative mode) — added.
+- [ ] **SH-1. [console] Turn on App Check (reCAPTCHA v3).** Biggest single lever: without it
+  the public API key + anonymous auth let anyone script Firestore directly, bypassing the
+  site (code brute-forcing, abuse, cost). Scaffolded already (P0 #5) — register the site,
+  paste the key in `js/firebase.js`, run **monitor → enforce**.
+- [ ] **SH-3. Group-doc metadata leak via guessable 5-char code.** `get` is allowed to any
+  signed-in user (needed to join), so a guessed code leaks club name + the denormalised
+  display names + current film title (subcollections stay private). Mitigate with App Check
+  (SH-1), longer codes, or not denormalising names onto the group doc. *Deferred — changing
+  code length breaks existing clubs; revisit if it matters.*
+- [ ] **SH-5. [console] Anonymous-account auto-cleanup** (dup of P0 #4) — deletes anon
+  accounts >30 days so they stop counting toward quota/billing.
+- [ ] **SH-7. TMDB v3 key is embedded in the client** — abusable against your key's quota;
+  v3 keys can't be domain-locked. Standard for client TMDB apps; proxy via a Function only
+  if it's ever abused. Low. (Plus P0 #6: optional HTTP-referrer restriction on the API key.)
+
+> **Publish step:** SH-2/4/6 are in the rules files but **don't auto-deploy**. Test in the
+> Firebase Emulator, then paste `firestore.rules` (or `functions/firestore.rules` in
+> server-authoritative mode) into Build → Firestore → Rules → Publish.
 
 ---
 
