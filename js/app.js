@@ -394,7 +394,15 @@ async function handleSendLink() {
     await sendAccountLink(email);
     msg.textContent = "Sent — check your email for the sign-in link.";
   } catch (e) {
-    msg.textContent = "Couldn't send: " + e.message;
+    const code = e && e.code;
+    const friendly = code === "auth/operation-not-allowed"
+      ? "email sign-in isn't enabled for this app yet (the admin needs to turn on the Email-link provider in Firebase)."
+      : code === "auth/invalid-email"
+      ? "that doesn't look like a valid email address."
+      : code === "auth/unauthorized-continue-uri" || code === "auth/unauthorized-domain"
+      ? "this site isn't on the app's authorised domains in Firebase yet."
+      : (e && e.message) || "something went wrong.";
+    msg.textContent = "Couldn't send — " + friendly;
     btn.disabled = false;
   }
 }
