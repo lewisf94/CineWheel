@@ -148,6 +148,16 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
 .stream-filter { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 0.9rem; color: var(--muted); cursor: pointer; }
 .stream-filter input { width: 16px; height: 16px; cursor: pointer; }
 .filter-note { margin-top: 6px; }
+.vote-start { margin-top: 14px; }
+.vote-card { text-align: center; }
+.vote-list { list-style: none; padding: 0; margin: 14px 0; text-align: left; }
+.vote-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); cursor: pointer; }
+.vote-list li:first-child .vote-row { border-top: none; }
+.vote-row input { width: 18px; height: 18px; flex-shrink: 0; }
+.vote-title { flex: 1; }
+.vote-count { min-width: 22px; text-align: center; border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; font-size: 0.8rem; color: var(--muted); }
+.vote-actions { display: flex; gap: 14px; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
+.vote-admin { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
 .turn-order { margin-top: 26px; text-align: center; }
 .turn-order .small { color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.7rem; }
 .turn-chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; align-items: center; margin-top: 10px; }

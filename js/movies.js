@@ -47,6 +47,47 @@ export async function removeMovie(code, movieId) {
   await deleteDoc(doc(db, "groups", code, "movies", movieId));
 }
 
+// ---- approval voting: an alternative to the spin ---------------------------
+// The current spinner opens a vote; everyone ticks the films they'd watch; the
+// film with the most approvals becomes the week's pick (no wheel animation).
+export async function startVote(code, memberId, name, shortlist) {
+  await updateDoc(doc(db, "groups", code), {
+    vote: {
+      startedBy: memberId, startedByName: name || "", startedAt: Date.now(),
+      shortlist: Array.isArray(shortlist) ? shortlist : [],
+      ballots: {},
+    },
+  });
+}
+export async function submitBallot(code, memberId, movieIds) {
+  await updateDoc(doc(db, "groups", code), {
+    ["vote.ballots." + memberId]: Array.isArray(movieIds) ? movieIds : [],
+  });
+}
+export async function cancelVote(code) {
+  await updateDoc(doc(db, "groups", code), { vote: null });
+}
+export async function commitVoteWinner(code, winner, deadlineDate, spinnerName) {
+  const deadline = Timestamp.fromDate(deadlineDate);
+  const now = Timestamp.now();
+  await runTransaction(db, async (tx) => {
+    const groupRef = doc(db, "groups", code);
+    const g = (await tx.get(groupRef)).data() || {};
+    if (!g.vote || g.currentFilm) return; // already resolved by someone else
+    tx.update(doc(db, "groups", code, "movies", winner.id), {
+      status: "current", pickedAt: serverTimestamp(), deadline, watchedBy: [],
+    });
+    tx.update(groupRef, {
+      currentFilm: {
+        movieId: winner.id, title: winner.title,
+        addedByName: winner.addedByName || "", spinnerName: spinnerName || "",
+        pickedAt: now, deadline,
+      },
+      vote: null,
+    });
+  });
+}
+
 // ---- per-film discussion (comments revealed with the reviews) --------------
 export async function postComment(code, movieId, text) {
   const t = (text || "").trim();

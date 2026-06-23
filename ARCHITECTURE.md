@@ -17,6 +17,11 @@ groups/{code}                         # code = 5-char share code (Kahoot-style)
     movieId, title, addedByName, spinnerName, pickedAt, deadline
   } | null
   lastSpin: { seed, startedAt, durationMs, segments[], winnerIndex, spinnerName } | null
+  vote: {                             # approval-vote round (alt to the spin), or null
+    startedBy, startedByName, startedAt, shortlist: [movieId, ...],
+    ballots: { memberId: [movieId, ...] }   # most-approved shortlist film wins
+  } | null
+  adminMemberId, bannedUids[], bannedMemberIds[], streamFilter   # admin/kick, ban, stream toggle
   resetRequest: {                     # unanimous-consent reset, or null
     startedBy, startedByName, startedAt, approvals: [memberId, ...]
   } | null

@@ -11,7 +11,7 @@ import {
   createGroup, joinGroup, currentSpinnerId, normaliseCode,
   requestReset, approveReset, cancelReset, performReset, setMyServices, kickMember, setStreamFilter,
 } from "./groups.js";
-import { addMovie, removeMovie, commitSpin, markWatchedAck, finalizeRound, setDeadline, setMovieServices, voteRemoveMovie, postComment, deleteComment } from "./movies.js";
+import { addMovie, removeMovie, commitSpin, markWatchedAck, finalizeRound, setDeadline, setMovieServices, voteRemoveMovie, postComment, deleteComment, startVote, submitBallot, cancelVote, commitVoteWinner } from "./movies.js";
 import {
   renderIdleWheel, chooseWinnerIndex, maybePlaySpin, setMuted, isMuted, resumeAudio,
 } from "./wheel.js";
@@ -502,6 +502,27 @@ function maybeRemoveVotedFilms() {
   });
 }
 
+// Resolve an approval vote once everyone's voted: single-writer (the spinner
+// commits; others step in after a delay) so we don't race the transaction.
+let resolvingVote = false;
+function maybeResolveVote() {
+  const v = state.group?.vote;
+  if (!v || state.group?.currentFilm) { resolvingVote = false; return; }
+  const ids = activeMemberIds();
+  const ballots = v.ballots || {};
+  const allVoted = ids.length > 0 && ids.every((id) => Array.isArray(ballots[id]));
+  if (!allVoted || resolvingVote) return;
+  const w = voteWinner();
+  if (!w) return;
+  resolvingVote = true;
+  const fire = () => commitVoteWinner(state.code, w, new Date(Date.now() + 7 * 86400000), v.startedByName || "")
+    .catch(() => { resolvingVote = false; });
+  if (currentSpinnerId(state.group) === getMemberId()) fire();
+  else setTimeout(() => {
+    if (state.group?.vote && !state.group?.currentFilm) fire(); else resolvingVote = false;
+  }, FALLBACK_MS);
+}
+
 // Where a round stands: who's watched, who's rated, and whether it's complete.
 function roundState(cf) {
   const myId = getMemberId();
@@ -601,6 +622,7 @@ function render() {
   }
 
   maybeRemoveVotedFilms();
+  maybeResolveVote();
   announceRound(state.group?.currentFilm);
   renderFilmCard();
 
@@ -756,6 +778,12 @@ function renderWheelTab() {
     })
     .join('<span class="turn-arrow">→</span>');
 
+  const vote = state.group?.vote;
+  if (vote && !state.group?.currentFilm) {
+    renderVoting(pane, vote, movies, myId, spinnerId, orderHtml);
+    return;
+  }
+
   pane.innerHTML = `
     <div class="wheel-wrap">
       <canvas id="wheel-canvas" width="460" height="460" role="img" aria-label="Wheel of films"></canvas>
@@ -768,6 +796,7 @@ function renderWheelTab() {
         ? "No films everyone can stream — add some, or turn off the filter."
         : wheelStatus(isMyTurn, movies.length, spinnerId)}</p>
       ${tmdbEnabled ? `<label class="stream-filter"><input type="checkbox" id="stream-filter-toggle"${filterOn ? " checked" : ""}> Only spin films everyone can stream</label>${filterOn && hiddenCount ? `<p class="muted small filter-note">${hiddenCount} hidden — not everyone can stream ${hiddenCount > 1 ? "them" : "it"}.</p>` : ""}` : ""}
+      ${isMyTurn && movies.length >= 2 ? `<div class="vote-start"><button class="btn" id="start-vote-btn">Too many to spin? Vote instead</button></div>` : ""}
     </div>
     ${order.length ? `<div class="turn-order"><div class="small">Turn order</div><div class="turn-chips">${orderHtml}</div></div>` : ""}
   `;
@@ -776,6 +805,9 @@ function renderWheelTab() {
 
   const sf = $("#stream-filter-toggle");
   if (sf) sf.addEventListener("change", () => setStreamFilter(state.code, sf.checked));
+
+  const sv = $("#start-vote-btn");
+  if (sv) sv.addEventListener("click", () => startVote(state.code, myId, getName(), sampleShortlist(movies)));
 
   pane.querySelectorAll("[data-kick]").forEach((b) =>
     b.addEventListener("click", () => {
@@ -811,6 +843,93 @@ function wheelStatus(isMyTurn, count, spinnerId) {
   const spinner = state.members.find((m) => m.id === spinnerId);
   if (isMyTurn) return `${count} film${count > 1 ? "s" : ""} ready — your spin.`;
   return `Waiting for ${esc(spinner?.name || "the next person")} to spin.`;
+}
+
+// ---- approval voting (alternative to the spin) -----------------------------
+const SHORTLIST = 6;
+// A random sample of film ids — so a big wheel becomes a short, votable list.
+function sampleShortlist(movies, n = SHORTLIST) {
+  const arr = movies.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr.slice(0, Math.min(n, arr.length)).map((m) => m.id);
+}
+// Tally approvals over the shortlist; most-approved wins (ties -> shortlist
+// order, which is identical on every client, so the winner is deterministic).
+function voteWinner() {
+  const vote = state.group?.vote;
+  if (!vote) return null;
+  const byId = Object.fromEntries(wheelMovies().map((m) => [m.id, m]));
+  const shortlist = (vote.shortlist || []).map((id) => byId[id]).filter(Boolean);
+  if (!shortlist.length) return null;
+  const counts = {};
+  Object.values(vote.ballots || {}).forEach((arr) => (arr || []).forEach((id) => (counts[id] = (counts[id] || 0) + 1)));
+  let best = shortlist[0], bestN = counts[shortlist[0].id] || 0;
+  shortlist.forEach((m) => { const n = counts[m.id] || 0; if (n > bestN) { best = m; bestN = n; } });
+  return best;
+}
+
+function renderVoting(pane, vote, movies, myId, spinnerId, orderHtml) {
+  const isSpinner = spinnerId === myId;
+  const byId = Object.fromEntries(wheelMovies().map((m) => [m.id, m]));
+  const shortlist = (vote.shortlist || []).map((id) => byId[id]).filter(Boolean);
+  const ballots = vote.ballots || {};
+  const myBallot = ballots[myId];
+  const iVoted = Array.isArray(myBallot);
+  const counts = {};
+  Object.values(ballots).forEach((arr) => (arr || []).forEach((id) => (counts[id] = (counts[id] || 0) + 1)));
+  const ids = activeMemberIds();
+  const votedCount = ids.filter((id) => Array.isArray(ballots[id])).length;
+
+  const rows = shortlist.map((m) => {
+    const checked = iVoted ? myBallot.includes(m.id) : false;
+    return `<li><label class="vote-row">
+      <input type="checkbox" class="vote-ck" data-vid="${m.id}"${checked ? " checked" : ""}>
+      <span class="vote-title">${esc(m.title)}${m.year ? ` <span class="muted small">(${esc(m.year)})</span>` : ""}</span>
+      <span class="vote-count" title="approvals">${counts[m.id] || 0}</span>
+    </label></li>`;
+  }).join("");
+
+  pane.innerHTML = `
+    <div class="card vote-card">
+      <div class="film-banner">Vote for the week's film</div>
+      <p class="muted small">A shortlist of ${shortlist.length}${vote.startedByName ? `, drawn by ${esc(vote.startedByName)}` : ""} — tick every film you'd be happy to watch. Most approvals wins.</p>
+      <ul class="vote-list">${rows || '<li class="muted">No films available.</li>'}</ul>
+      <div class="vote-actions">
+        <button class="btn primary" id="vote-submit">${iVoted ? "Update my picks" : "Submit my picks"}</button>
+        <span class="muted small">${votedCount}/${ids.length} voted</span>
+      </div>
+      ${isSpinner ? `<div class="vote-admin">
+        <button class="text-link" id="vote-shuffle">Shuffle shortlist</button>
+        <button class="text-link" id="vote-close">Close &amp; pick winner</button>
+        <button class="text-link" id="vote-cancel">Cancel vote</button>
+      </div>` : ""}
+    </div>
+    ${orderHtml ? `<div class="turn-order"><div class="small">Turn order</div><div class="turn-chips">${orderHtml}</div></div>` : ""}
+  `;
+
+  $("#vote-submit").addEventListener("click", () => {
+    const picks = [...pane.querySelectorAll(".vote-ck:checked")].map((c) => c.dataset.vid);
+    submitBallot(state.code, myId, picks);
+  });
+  if (isSpinner) {
+    $("#vote-shuffle").addEventListener("click", () => startVote(state.code, myId, getName(), sampleShortlist(movies)));
+    $("#vote-close").addEventListener("click", () => {
+      const w = voteWinner();
+      if (w && confirm(`Close the vote and pick "${w.title}" (the most approved) now?`)) {
+        commitVoteWinner(state.code, w, new Date(Date.now() + 7 * 86400000), vote.startedByName || getName());
+      }
+    });
+    $("#vote-cancel").addEventListener("click", () => { if (confirm("Cancel this vote and go back to the wheel?")) cancelVote(state.code); });
+  }
+  pane.querySelectorAll("[data-kick]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const m = state.members.find((x) => x.id === b.dataset.kick);
+      if (confirm(`Remove ${m?.name || "this member"} from the club?`)) kickMember(state.code, b.dataset.kick, b.dataset.kickUid || m?.uid || "");
+    })
+  );
 }
 
 function renderMoviesTab() {
