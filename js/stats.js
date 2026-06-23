@@ -163,11 +163,45 @@ export function renderStats(container, movies, ratings, members) {
     html += `</div>`;
   }
 
+  // Recent activity, newest first, from films added/finished and ratings given.
+  const titleOf = Object.fromEntries(movies.map((m) => [m.id, m.title]));
+  const events = [];
+  movies.forEach((m) => {
+    if (m.addedAt) events.push({ t: tms(m.addedAt), text: `${esc(m.addedByName || "Someone")} added <b>${esc(m.title)}</b>` });
+    if (m.status === "watched" && m.watchedAt) events.push({ t: tms(m.watchedAt), text: `<b>${esc(m.title)}</b> finished — reviews revealed` });
+  });
+  ratings.forEach((r) => {
+    events.push({ t: tms(r.updatedAt), text: `${esc(r.name || "Someone")} rated <b>${esc(titleOf[r.movieId] || "a film")}</b> ${fmt(r.score)}★` });
+  });
+  const recent = events.filter((e) => e.t > 0).sort((a, b) => b.t - a.t).slice(0, 8);
+  if (recent.length) {
+    html += `<div class="card"><h3>Recent activity</h3><ul class="activity">`;
+    recent.forEach((e) => { html += `<li>${e.text} <span class="muted small">${ago(e.t)}</span></li>`; });
+    html += `</ul></div>`;
+  }
+
   if (!watched.length && !ratings.length) {
     html += `<p class="muted center">No data yet. Spin the wheel, watch a film, and rate it to see the numbers appear here.</p>`;
   }
 
   container.innerHTML = html;
+}
+
+// Firestore Timestamp / {seconds} -> ms (0 if not yet acked by the server).
+function tms(ts) {
+  if (!ts) return 0;
+  if (typeof ts.toMillis === "function") return ts.toMillis();
+  return ts.seconds != null ? ts.seconds * 1000 : 0;
+}
+function ago(ms) {
+  const s = Math.max(0, (Date.now() - ms) / 1000);
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return d < 7 ? `${d}d ago` : new Date(ms).toLocaleDateString();
 }
 
 function hoursMins(mins) {

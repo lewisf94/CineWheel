@@ -239,8 +239,16 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
 
 /* ---- ratings / history ---- */
 .pending-card { border-color: var(--line-strong); scroll-margin-top: 84px; }
-.cal-row { margin-top: 6px; }
+.cal-row { margin-top: 6px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+[data-theme="a24"] .cal-row { justify-content: flex-start; }
 .spoiler-hint { margin: 6px 0 4px; }
+.activity { list-style: none; padding: 0; margin: 0; }
+.activity li { padding: 7px 0; border-top: 1px solid var(--line); font-size: 0.92rem; }
+.activity li:first-child { border-top: none; }
+.recap-cta { margin-bottom: 16px; }
+.recap-big { font-size: 1.3rem; font-weight: 700; margin: 4px 0 10px; }
+.recap-favs { margin: 8px 0 0; padding-left: 18px; }
+.recap-favs li { margin: 3px 0; }
 .spoiler { background: var(--text); color: transparent; border-radius: 3px; padding: 0 3px; cursor: pointer; user-select: none; }
 .spoiler.revealed { background: transparent; color: inherit; cursor: text; user-select: text; }
 .rating-hist { display: flex; flex-direction: column; gap: 2px; margin: 10px 0 4px; max-width: 220px; }

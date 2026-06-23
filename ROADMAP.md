@@ -23,7 +23,7 @@ Working through these; **checked = shipped**. Pure front-end unless noted.
 
 ### Social / engagement
 - [ ] **Discussion thread per film** — comments/reactions on each watched film, unlocked once reviews reveal *(new Firestore subcollection + rules)*
-- [ ] **Activity feed** — recent "X added / rated …"
+- [x] **Activity feed** — recent "X added / rated …"
 - [x] **Taste compatibility** — who agrees / clashes most, from rating correlations
 
 ### Reminders
@@ -35,7 +35,7 @@ Working through these; **checked = shipped**. Pure front-end unless noted.
 - [ ] **TMDB recommendations** — "if you liked last week's pick…" on the Films tab
 
 ### Stats / wrap-up
-- [ ] **Season recap ("Spinema Wrapped")** — shareable end-of-cycle summary card
+- [x] **Season recap ("Spinema Wrapped")** — end-of-cycle summary popup
 - [x] **Per-film rating breakdown** — half-star histogram on each watched card
 
 ### Polish

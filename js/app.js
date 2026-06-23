@@ -129,10 +129,13 @@ function wireStaticUI() {
   $("#account-close").addEventListener("click", () => hide($("#account-modal")));
   wireProvidersModal();
   $("#movie-modal-close").addEventListener("click", closeMovieModal);
+  $("#recap-close").addEventListener("click", () => hide($("#recap-modal")));
   // Escape closes whichever modal is open.
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    if (!$("#movie-modal").classList.contains("hidden")) {
+    if (!$("#recap-modal").classList.contains("hidden")) {
+      hide($("#recap-modal"));
+    } else if (!$("#movie-modal").classList.contains("hidden")) {
       closeMovieModal();
     } else if (!$("#providers-modal").classList.contains("hidden")) {
       closeProvidersModal();
@@ -593,7 +596,7 @@ function render() {
   if (state.tab === "wheel") renderWheelTab();
   else if (state.tab === "movies") { if (!editingWithin($("#tab-movies"))) renderMoviesTab(); }
   else if (state.tab === "history") { if (!editingWithin($("#tab-history"))) renderHistoryTab(); }
-  else if (state.tab === "stats") { renderStats($("#tab-stats"), state.movies, state.ratings, orderedMembers()); appendResetControl($("#tab-stats")); }
+  else if (state.tab === "stats") { renderStats($("#tab-stats"), state.movies, state.ratings, orderedMembers()); appendRecapButton($("#tab-stats")); appendResetControl($("#tab-stats")); }
 
   maybePlaySpin(state.group?.lastSpin);
 }
@@ -640,7 +643,7 @@ function renderFilmCard() {
         <span class="deadline-pill" id="countdown">${countdownText(countdownDeadline)}</span>
         <span class="muted small">watch by ${new Date(countdownDeadline).toLocaleDateString()}</span>
       </div>
-      <div class="cal-row"><button type="button" class="text-link" id="add-cal">Add deadline to calendar</button></div>
+      <div class="cal-row"><button type="button" class="text-link" id="add-cal">Add deadline to calendar</button> <a class="text-link" id="add-gcal" target="_blank" rel="noopener">Google</a></div>
       ${isSpinner ? `<div class="deadline-edit"><label class="small muted">Change deadline</label><input type="date" id="deadline-input" value="${dateInputValue(countdownDeadline)}"></div>` : ""}
       <div class="round-progress">
         <div class="rp-item"><div class="rp-count">${rs.watchedCount}<span class="of"> / ${rs.total}</span></div><div class="rp-label">Watched</div></div>
@@ -671,7 +674,9 @@ function renderFilmCard() {
     const ep = card.querySelector("[data-edit-prov]");
     if (ep) ep.addEventListener("click", () => openProvidersEditor(ep.dataset.editProv));
     const cal = $("#add-cal");
-    if (cal) cal.addEventListener("click", () => downloadIcs(cf.title, countdownDeadline));
+    if (cal) cal.addEventListener("click", () => addToCalendar(cf.title, countdownDeadline));
+    const gcal = $("#add-gcal");
+    if (gcal) gcal.href = gcalUrl(cf.title, countdownDeadline);
     // Tap the poster or title for the full details popup.
     if (tmdbEnabled) {
       card.querySelectorAll(".film-poster, .film-title").forEach((el) => {
@@ -1093,6 +1098,57 @@ function closeMovieModal() {
   hide($("#movie-modal"));
 }
 
+// ---- season recap ("Spinema Wrapped") --------------------------------------
+function appendRecapButton(pane) {
+  if (!state.movies.some((m) => m.status === "watched")) return; // nothing yet
+  const div = document.createElement("div");
+  div.className = "recap-cta center";
+  div.innerHTML = `<button class="btn small" id="open-recap">Season recap</button>`;
+  pane.insertBefore(div, pane.firstChild);
+  $("#open-recap").addEventListener("click", () => { $("#recap-body").innerHTML = recapHtml(); show($("#recap-modal")); });
+}
+
+function recapHtml() {
+  const watched = state.movies.filter((m) => m.status === "watched");
+  const members = orderedMembers();
+  const ratings = state.ratings;
+  const titleOf = Object.fromEntries(state.movies.map((m) => [m.id, m.title]));
+  const mean = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
+
+  const scoresFor = {}, givenBy = {};
+  ratings.forEach((r) => {
+    (scoresFor[r.movieId] ||= []).push(r.score);
+    if (r.score > 0) (givenBy[r.memberId] ||= []).push(r.score);
+  });
+  const board = watched
+    .map((m) => ({ title: m.title, a: mean(scoresFor[m.id] || []), n: (scoresFor[m.id] || []).length }))
+    .filter((m) => m.n).sort((x, y) => y.a - x.a);
+  const totalMins = watched.reduce((s, m) => s + (typeof m.runtime === "number" ? m.runtime : 0), 0);
+  const genreCounts = {};
+  watched.forEach((m) => (m.genres || []).forEach((g) => (genreCounts[g] = (genreCounts[g] || 0) + 1)));
+  const topGenre = Object.entries(genreCounts).sort((a, b) => b[1] - a[1])[0];
+  const raters = members
+    .map((m) => ({ name: m.name || "Someone", a: mean(givenBy[m.id] || []), n: (givenBy[m.id] || []).length }))
+    .filter((r) => r.n);
+  const generous = raters.length ? raters.reduce((a, b) => (b.a > a.a ? b : a)) : null;
+  const favs = members.map((m) => {
+    const mine = ratings.filter((r) => r.memberId === m.id && r.score > 0);
+    if (!mine.length) return null;
+    const top = mine.reduce((a, b) => (b.score > a.score ? b : a));
+    return { name: m.name || "Someone", title: titleOf[top.movieId] || "a film", score: top.score };
+  }).filter(Boolean);
+
+  return `
+    <h2 id="recap-modal-title">Spinema recap</h2>
+    <p class="recap-big">${watched.length} film${watched.length === 1 ? "" : "s"}${totalMins ? ` &middot; ${fmtRuntime(totalMins)} watched` : ""}</p>
+    ${topGenre ? `<p class="muted">Most-watched genre: <b>${esc(topGenre[0])}</b></p>` : ""}
+    ${board[0] ? `<p><b>Top rated:</b> ${esc(board[0].title)} <span class="muted">(${fmt2(board[0].a)}★)</span></p>` : ""}
+    ${board.length > 1 ? `<p><b>Lowest rated:</b> ${esc(board[board.length - 1].title)} <span class="muted">(${fmt2(board[board.length - 1].a)}★)</span></p>` : ""}
+    ${generous ? `<p><b>Most generous critic:</b> ${esc(generous.name)} <span class="muted">(${fmt2(generous.a)} avg)</span></p>` : ""}
+    ${favs.length ? `<h3>Everyone's favourite</h3><ul class="recap-favs">${favs.map((f) => `<li>${esc(f.name)}: <b>${esc(f.title)}</b> ${f.score}★</li>`).join("")}</ul>` : ""}
+    <p class="muted small">A snapshot of the club so far.</p>`;
+}
+
 function posterThumb(m, size = "w92") {
   const url = m.posterPath ? posterUrl(m.posterPath, size) : "";
   return url ? `<img class="poster-thumb" src="${esc(url)}" alt="" loading="lazy" />` : "";
@@ -1341,28 +1397,50 @@ function ratingHistogram(scores) {
   return `<div class="rating-hist"><div class="hist-bars">${bars}</div><div class="hist-axis muted small"><span>½</span><span>5★</span></div></div>`;
 }
 
-// Build + download an .ics calendar event for the watch-by deadline.
+// Calendar event for the watch-by deadline.
 function icsEsc(s) { return String(s).replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n"); }
-function downloadIcs(title, deadlineMs) {
-  if (!deadlineMs) return;
-  const stamp = (ms) => new Date(ms).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-  const ics = [
+function icsStamp(ms) { return new Date(ms).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"; }
+function buildIcs(title, deadlineMs) {
+  return [
     "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Spinema//EN", "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
     "UID:spinema-" + deadlineMs + "@" + (state.code || "club"),
-    "DTSTAMP:" + stamp(Date.now()),
-    "DTSTART:" + stamp(deadlineMs - 60 * 60 * 1000),
-    "DTEND:" + stamp(deadlineMs),
+    "DTSTAMP:" + icsStamp(Date.now()),
+    "DTSTART:" + icsStamp(deadlineMs - 60 * 60 * 1000),
+    "DTEND:" + icsStamp(deadlineMs),
     "SUMMARY:" + icsEsc("Watch: " + title),
     "DESCRIPTION:" + icsEsc("Spinema film-club pick — watch and rate before the deadline."),
     "END:VEVENT", "END:VCALENDAR",
   ].join("\r\n");
-  const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+}
+const isIOS = () =>
+  /iP(hone|ad|od)/.test(navigator.userAgent) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+// One-tap add: on iOS open the event straight in Calendar (a data: URL is
+// handled natively — no Files detour); elsewhere download the .ics.
+function addToCalendar(title, deadlineMs) {
+  if (!deadlineMs) return;
+  const ics = buildIcs(title, deadlineMs);
   const a = document.createElement("a");
-  a.href = url;
-  a.download = "spinema-" + (title || "film").replace(/[^a-z0-9]+/gi, "-").toLowerCase() + ".ics";
+  if (isIOS()) {
+    a.href = "data:text/calendar;charset=utf-8," + encodeURIComponent(ics);
+    a.target = "_blank";
+    a.rel = "noopener";
+  } else {
+    a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+    a.download = "spinema-" + (title || "film").replace(/[^a-z0-9]+/gi, "-").toLowerCase() + ".ics";
+  }
   document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  if (a.download) setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function gcalUrl(title, deadlineMs) {
+  const p = new URLSearchParams({
+    action: "TEMPLATE",
+    text: "Watch: " + title,
+    dates: icsStamp(deadlineMs - 60 * 60 * 1000) + "/" + icsStamp(deadlineMs),
+    details: "Spinema film-club pick — watch and rate before the deadline.",
+  });
+  return "https://calendar.google.com/calendar/render?" + p.toString();
 }
 
 function renderWatchedCard(pane, movie, myId) {
