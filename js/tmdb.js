@@ -91,10 +91,13 @@ export async function getDetails(tmdbId) {
 export async function getMovieDetail(tmdbId) {
   if (!tmdbEnabled || !tmdbId) return null;
   try {
-    const res = await fetch(`${API}/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=en-US&append_to_response=credits`);
+    const res = await fetch(`${API}/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=en-US&append_to_response=credits,videos`);
     if (!res.ok) return null;
     const d = await res.json();
     const crew = (d.credits && d.credits.crew) || [];
+    const vids = (d.videos && d.videos.results) || [];
+    const trailer = vids.find((v) => v.site === "YouTube" && v.type === "Trailer")
+      || vids.find((v) => v.site === "YouTube");
     return {
       tmdbId,
       title: d.title || d.original_title || "",
@@ -107,6 +110,7 @@ export async function getMovieDetail(tmdbId) {
       voteAverage: typeof d.vote_average === "number" && d.vote_average > 0 ? d.vote_average : null,
       directors: crew.filter((c) => c.job === "Director").map((c) => c.name).filter(Boolean),
       cast: ((d.credits && d.credits.cast) || []).slice(0, 8).map((c) => c.name).filter(Boolean),
+      trailerKey: trailer ? trailer.key : "",
     };
   } catch (_) {
     return null;

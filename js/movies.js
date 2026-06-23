@@ -47,6 +47,14 @@ export async function removeMovie(code, movieId) {
   await deleteDoc(doc(db, "groups", code, "movies", movieId));
 }
 
+// Vote to drop a not-yet-picked film from the wheel. Idempotent (arrayUnion).
+// The app removes the film once everyone except the adder has voted.
+export async function voteRemoveMovie(code, movieId, memberId) {
+  await updateDoc(doc(db, "groups", code, "movies", movieId), {
+    removeVotes: arrayUnion(memberId),
+  });
+}
+
 // Club-set "where to watch" override (service ids from STREAMING_SERVICES),
 // correcting wrong/stale JustWatch data. Pass null to clear it and fall back to
 // TMDB; pass [] to say "not on any subscription service".

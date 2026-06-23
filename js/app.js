@@ -11,7 +11,7 @@ import {
   createGroup, joinGroup, currentSpinnerId, normaliseCode,
   requestReset, approveReset, cancelReset, performReset, setMyServices, kickMember, setStreamFilter,
 } from "./groups.js";
-import { addMovie, removeMovie, commitSpin, markWatchedAck, finalizeRound, setDeadline, setMovieServices } from "./movies.js";
+import { addMovie, removeMovie, commitSpin, markWatchedAck, finalizeRound, setDeadline, setMovieServices, voteRemoveMovie } from "./movies.js";
 import {
   renderIdleWheel, chooseWinnerIndex, maybePlaySpin, setMuted, isMuted, resumeAudio,
 } from "./wheel.js";
@@ -467,6 +467,27 @@ const groupAdminId = () =>
   state.group?.adminMemberId || (state.group?.memberOrder || [])[0] || null;
 const isAdmin = () => !!groupAdminId() && groupAdminId() === getMemberId();
 
+// Vote-off: a wheel film is dropped once everyone EXCEPT its adder has voted to
+// remove it. Any client may fire the delete (deleteDoc is idempotent); the
+// removingIds guard stops a single client spamming it.
+const removingIds = new Set();
+function removeVoteInfo(movie) {
+  const needed = activeMemberIds().filter((id) => id !== movie.addedByMemberId);
+  const votes = movie.removeVotes || [];
+  return { needed, votes, count: needed.filter((id) => votes.includes(id)).length };
+}
+function maybeRemoveVotedFilms() {
+  if (activeMemberIds().length < 2) return;
+  state.movies.forEach((m) => {
+    if (m.status !== "wheel" || removingIds.has(m.id)) return;
+    const { needed, votes } = removeVoteInfo(m);
+    if (needed.length && needed.every((id) => votes.includes(id))) {
+      removingIds.add(m.id);
+      removeMovie(state.code, m.id).catch(() => removingIds.delete(m.id));
+    }
+  });
+}
+
 // Where a round stands: who's watched, who's rated, and whether it's complete.
 function roundState(cf) {
   const myId = getMemberId();
@@ -565,6 +586,7 @@ function render() {
     resetting = false;
   }
 
+  maybeRemoveVotedFilms();
   announceRound(state.group?.currentFilm);
   renderFilmCard();
 
@@ -784,8 +806,14 @@ function renderMoviesTab() {
   const mySvcs = me && Array.isArray(me.services) ? me.services : [];
 
   const list = movies
-    .map(
-      (m) => `
+    .map((m) => {
+      const iAmAdder = m.addedByMemberId === myId;
+      const { needed, votes, count } = removeVoteInfo(m);
+      const iVoted = votes.includes(myId);
+      const voteCtl = !iAmAdder
+        ? `<button class="link-btn voteoff" data-voteoff="${m.id}"${iVoted ? " disabled" : ""} title="Vote to remove this film">${iVoted ? `Voted off (${count}/${needed.length})` : `Vote off${count ? ` (${count}/${needed.length})` : ""}`}</button>`
+        : (count ? `<span class="muted small voteoff-note" title="Removed once everyone else votes">${count}/${needed.length} voted off</span>` : "");
+      return `
       <li class="movie-row">
         ${posterThumb(m)}
         <span class="movie-main">
@@ -794,9 +822,10 @@ function renderMoviesTab() {
           ${tmdbEnabled ? `<span class="movie-avail small" data-mid="${m.id}"></span>` : ""}
         </span>
         ${tmdbEnabled ? `<button class="link-btn" data-edit-prov="${m.id}" title="Correct where to watch">Fix streaming</button>` : ""}
-        ${m.addedByMemberId === myId ? `<button class="link-btn" data-remove="${m.id}" title="Remove">Remove</button>` : ""}
-      </li>`
-    )
+        ${voteCtl}
+        ${iAmAdder ? `<button class="link-btn" data-remove="${m.id}" title="Remove">Remove</button>` : ""}
+      </li>`;
+    })
     .join("");
 
   const region = watchRegion();
@@ -853,6 +882,9 @@ function renderMoviesTab() {
 
   pane.querySelectorAll("[data-edit-prov]").forEach((b) =>
     b.addEventListener("click", () => openProvidersEditor(b.dataset.editProv))
+  );
+  pane.querySelectorAll("[data-voteoff]").forEach((b) =>
+    b.addEventListener("click", () => voteRemoveMovie(state.code, b.dataset.voteoff, myId))
   );
 
   if (tmdbEnabled) fillWheelAvailability(movies);
@@ -1007,6 +1039,11 @@ async function openMovieDetail(movie) {
     return;
   }
   body.innerHTML = movieDetailHtml(d, movie);
+  // Inline "where to watch" — fetched after the main details land.
+  const data = await filmProviders(movie);
+  if (token !== movieDetailReq) return;
+  const we = $("#movie-modal-watch");
+  if (we) we.innerHTML = watchProvidersHtml(data);
 }
 
 function fmtRuntime(min) {
@@ -1024,6 +1061,8 @@ function movieDetailHtml(d, movie) {
   ].filter(Boolean).map(esc).join("  ·  ");
   const rating = d.voteAverage ? `<div class="muted small">TMDB ${d.voteAverage.toFixed(1)}/10</div>` : "";
   const tagline = d.tagline ? `<p class="movie-tagline muted">${esc(d.tagline)}</p>` : "";
+  const trailer = d.trailerKey
+    ? `<p class="movie-trailer"><a class="btn small" href="https://www.youtube.com/watch?v=${esc(d.trailerKey)}" target="_blank" rel="noopener">Watch trailer</a></p>` : "";
   const overview = d.overview
     ? `<p class="movie-overview">${esc(d.overview)}</p>`
     : `<p class="muted">No description available.</p>`;
@@ -1039,11 +1078,13 @@ function movieDetailHtml(d, movie) {
         ${meta ? `<div class="muted small">${meta}</div>` : ""}
         ${rating}
         ${tagline}
+        ${trailer}
       </div>
     </div>
     ${overview}
     ${director}
     ${cast}
+    <div id="movie-modal-watch" class="watch-providers"></div>
     <p class="muted small movie-attr">Details from TMDB.</p>`;
 }
 

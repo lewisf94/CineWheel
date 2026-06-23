@@ -16,7 +16,7 @@ Working through these; **checked = shipped**. Pure front-end unless noted.
 ### Picking the film
 - [x] **Spin only what everyone can stream** — toggle so the wheel/spin excludes films not on every member's services
 - [ ] **Ranked-choice / approval vote mode** — alternative to the random spin *(needs a product decision: replace the spin or run alongside? which method?)*
-- [ ] **Vote a film off the wheel** — anyone can flag a wheel film for removal; once **every member except the one who added it** has voted to remove, it's dropped. Same unanimous-consent pattern as the group reset; votes stored on the movie doc.
+- [x] **Vote a film off the wheel** — anyone can flag a wheel film for removal; once **every member except the one who added it** has voted to remove, it's dropped. Same unanimous-consent pattern as the group reset; votes stored on the movie doc.
 
 ### Import
 - [ ] **Import a Letterboxd watchlist** — upload the exported watchlist CSV (Letterboxd → Settings → Import & Export → Export), show the films with checkboxes (select all / pick a few), then add the chosen ones to the wheel (enriched via TMDB by title+year). Pure front-end (file input + CSV parse + `addMovie`).
@@ -31,7 +31,7 @@ Working through these; **checked = shipped**. Pure front-end unless noted.
 - [ ] **Web push / email deadline nudges** *(needs FCM/VAPID keys + the optional Functions backend)*
 
 ### Richer film info (details popup)
-- [ ] **Trailer + streaming inline** — "Watch trailer" (TMDB videos) + where-to-watch in the popup
+- [x] **Trailer + streaming inline** — "Watch trailer" (TMDB videos) + where-to-watch in the popup
 - [ ] **TMDB recommendations** — "if you liked last week's pick…" on the Films tab
 
 ### Stats / wrap-up
