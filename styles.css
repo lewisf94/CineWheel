@@ -233,6 +233,14 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
 
 /* ---- ratings / history ---- */
 .pending-card { border-color: var(--line-strong); scroll-margin-top: 84px; }
+.cal-row { margin-top: 6px; }
+.spoiler-hint { margin: 6px 0 4px; }
+.spoiler { background: var(--text); color: transparent; border-radius: 3px; padding: 0 3px; cursor: pointer; user-select: none; }
+.spoiler.revealed { background: transparent; color: inherit; cursor: text; user-select: text; }
+.rating-hist { display: flex; flex-direction: column; gap: 2px; margin: 10px 0 4px; max-width: 220px; }
+.hist-bars { display: flex; align-items: flex-end; gap: 2px; height: 34px; }
+.hist-bar { flex: 1; min-height: 1px; background: var(--accent); border-radius: 1px 1px 0 0; opacity: 0.85; }
+.hist-axis { display: flex; justify-content: space-between; }
 .sealed-banner { display: inline-block; border: 1px solid var(--line-strong); color: var(--muted); padding: 4px 12px; border-radius: 999px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 8px; }
 .watched-head { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; flex-wrap: wrap; }
 .watched-head h3 { margin: 0; font-size: 1.4rem; }

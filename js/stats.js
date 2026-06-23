@@ -114,6 +114,35 @@ export function renderStats(container, movies, ratings, members) {
     html += `</tbody></table><p class="muted small">"Avg received" = average score on films that person added.</p></div>`;
   }
 
+  // Taste compatibility: average half-star gap between each pair of members on
+  // the films they BOTH rated (needs ≥2 shared films to count).
+  const byMember = {};
+  ratings.forEach((r) => { (byMember[r.memberId] ||= {})[r.movieId] = r.score; });
+  const nameOf = Object.fromEntries(members.map((m) => [m.id, m.name || "Someone"]));
+  const mids = members.map((m) => m.id);
+  const pairs = [];
+  for (let i = 0; i < mids.length; i++) {
+    for (let j = i + 1; j < mids.length; j++) {
+      const a = byMember[mids[i]] || {}, b = byMember[mids[j]] || {};
+      const common = Object.keys(a).filter((mv) => mv in b);
+      if (common.length < 2) continue;
+      pairs.push({
+        a: nameOf[mids[i]], b: nameOf[mids[j]], n: common.length,
+        gap: avg(common.map((mv) => Math.abs(a[mv] - b[mv]))),
+      });
+    }
+  }
+  if (pairs.length) {
+    const closest = pairs.reduce((x, y) => (y.gap < x.gap ? y : x));
+    const farthest = pairs.reduce((x, y) => (y.gap > x.gap ? y : x));
+    html += `<div class="card"><h3>Taste matches</h3>`;
+    html += `<p class="meta-line"><b>Most in sync:</b> ${esc(closest.a)} &amp; ${esc(closest.b)} <span class="muted">(${fmt(closest.gap)}★ apart over ${closest.n})</span></p>`;
+    if (pairs.length > 1 && farthest !== closest) {
+      html += `<p class="meta-line"><b>Biggest clash:</b> ${esc(farthest.a)} &amp; ${esc(farthest.b)} <span class="muted">(${fmt(farthest.gap)}★ apart over ${farthest.n})</span></p>`;
+    }
+    html += `</div>`;
+  }
+
   if (totalMins > 0 || topGenres.length || decades.length) {
     html += `<div class="card"><h3>Watch habits</h3>`;
     if (totalMins > 0) {

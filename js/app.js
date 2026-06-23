@@ -145,6 +145,17 @@ function wireStaticUI() {
   });
   $("#leave-btn").addEventListener("click", leaveGroup);
 
+  // Reveal a ||spoiler|| on click or Enter/Space.
+  document.addEventListener("click", (e) => {
+    const sp = e.target.closest?.(".spoiler");
+    if (sp) sp.classList.add("revealed");
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const sp = e.target.closest?.(".spoiler:not(.revealed)");
+    if (sp) { e.preventDefault(); sp.classList.add("revealed"); }
+  });
+
   $("#create-btn").addEventListener("click", handleCreate);
   $("#join-btn").addEventListener("click", () => handleJoin($("#join-code").value));
   $("#join-code").addEventListener("keydown", (e) => e.key === "Enter" && handleJoin($("#join-code").value));
@@ -607,6 +618,7 @@ function renderFilmCard() {
         <span class="deadline-pill" id="countdown">${countdownText(countdownDeadline)}</span>
         <span class="muted small">watch by ${new Date(countdownDeadline).toLocaleDateString()}</span>
       </div>
+      <div class="cal-row"><button type="button" class="text-link" id="add-cal">Add deadline to calendar</button></div>
       ${isSpinner ? `<div class="deadline-edit"><label class="small muted">Change deadline</label><input type="date" id="deadline-input" value="${dateInputValue(countdownDeadline)}"></div>` : ""}
       <div class="round-progress">
         <div class="rp-item"><div class="rp-count">${rs.watchedCount}<span class="of"> / ${rs.total}</span></div><div class="rp-label">Watched</div></div>
@@ -636,6 +648,8 @@ function renderFilmCard() {
     });
     const ep = card.querySelector("[data-edit-prov]");
     if (ep) ep.addEventListener("click", () => openProvidersEditor(ep.dataset.editProv));
+    const cal = $("#add-cal");
+    if (cal) cal.addEventListener("click", () => downloadIcs(cf.title, countdownDeadline));
     // Tap the poster or title for the full details popup.
     if (tmdbEnabled) {
       card.querySelectorAll(".film-poster, .film-title").forEach((el) => {
@@ -1226,6 +1240,48 @@ function renderHistoryTab() {
   watched.forEach((movie) => renderWatchedCard(pane, movie, myId));
 }
 
+// Escape a review, then turn ||spoiler|| markup into click-to-reveal spans.
+function renderReview(text) {
+  return esc(text).replace(/\|\|([^|]+)\|\|/g,
+    '<span class="spoiler" tabindex="0" role="button" aria-label="Hidden spoiler, click to reveal">$1</span>');
+}
+
+// A compact half-star histogram (½…5) of a film's scores.
+function ratingHistogram(scores) {
+  if (scores.length < 2) return "";
+  const buckets = Array(10).fill(0);
+  scores.forEach((s) => { const i = Math.round(s * 2) - 1; if (i >= 0 && i < 10) buckets[i]++; });
+  const max = Math.max(...buckets, 1);
+  const bars = buckets
+    .map((c, i) => `<span class="hist-bar" style="height:${Math.round((c / max) * 100)}%" title="${(i + 1) / 2}★: ${c}"></span>`)
+    .join("");
+  return `<div class="rating-hist"><div class="hist-bars">${bars}</div><div class="hist-axis muted small"><span>½</span><span>5★</span></div></div>`;
+}
+
+// Build + download an .ics calendar event for the watch-by deadline.
+function icsEsc(s) { return String(s).replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n"); }
+function downloadIcs(title, deadlineMs) {
+  if (!deadlineMs) return;
+  const stamp = (ms) => new Date(ms).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  const ics = [
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Spinema//EN", "CALSCALE:GREGORIAN",
+    "BEGIN:VEVENT",
+    "UID:spinema-" + deadlineMs + "@" + (state.code || "club"),
+    "DTSTAMP:" + stamp(Date.now()),
+    "DTSTART:" + stamp(deadlineMs - 60 * 60 * 1000),
+    "DTEND:" + stamp(deadlineMs),
+    "SUMMARY:" + icsEsc("Watch: " + title),
+    "DESCRIPTION:" + icsEsc("Spinema film-club pick — watch and rate before the deadline."),
+    "END:VEVENT", "END:VCALENDAR",
+  ].join("\r\n");
+  const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "spinema-" + (title || "film").replace(/[^a-z0-9]+/gi, "-").toLowerCase() + ".ics";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function renderWatchedCard(pane, movie, myId) {
   const movieRatings = state.ratings.filter((r) => r.movieId === movie.id);
   const scores = movieRatings.map((r) => r.score);
@@ -1237,7 +1293,7 @@ function renderWatchedCard(pane, movie, myId) {
       <div class="rating-line">
         <span class="rating-name">${esc(r.name || "Someone")}</span>
         ${starsHtml(r.score)}
-        ${r.review ? `<div class="review">${esc(r.review)}</div>` : ""}
+        ${r.review ? `<div class="review">${renderReview(r.review)}</div>` : ""}
       </div>`
     )
     .join("");
@@ -1251,6 +1307,7 @@ function renderWatchedCard(pane, movie, myId) {
       <div class="watched-avg">${scores.length ? starsHtml(Math.round(avgScore * 2) / 2) + ` <b>${fmt2(avgScore)}</b> <span class="muted small">(${scores.length})</span>` : '<span class="muted small">no ratings</span>'}</div>
     </div>
     <div class="muted small">added by ${esc(movie.addedByName || "?")}${filmMetaBits(movie) ? " · " + esc(filmMetaBits(movie)) : ""}</div>
+    ${ratingHistogram(scores)}
     <div class="ratings-list">${others || ""}</div>
     <div class="my-rating-mount"></div>
   `;
@@ -1267,6 +1324,7 @@ function mountRatingEditor(container, movieId, myId, sealed) {
       <div class="small muted">Your rating</div>
       <div class="my-rating-stars"></div>
       <textarea class="review-input" placeholder="Add a short review or comment…" maxlength="500">${esc(mine?.review || "")}</textarea>
+      <div class="muted small spoiler-hint">Wrap spoilers in ||double bars|| to hide them until tapped.</div>
       <button class="btn small save-rating">${mine ? "Update" : "Save"} rating</button>
       <span class="save-note small"></span>
     </div>

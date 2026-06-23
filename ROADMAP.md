@@ -9,6 +9,41 @@ your Firebase project from here. I write the code; you deploy.
 
 ---
 
+## Feature requests — queue (2026-06, Lewis)
+
+Working through these; **checked = shipped**. Pure front-end unless noted.
+
+### Picking the film
+- [ ] **Spin only what everyone can stream** — toggle so the wheel/spin excludes films not on every member's services
+- [ ] **Ranked-choice / approval vote mode** — alternative to the random spin *(needs a product decision: replace the spin or run alongside? which method?)*
+- [ ] **Vote a film off the wheel** — anyone can flag a wheel film for removal; once **every member except the one who added it** has voted to remove, it's dropped. Same unanimous-consent pattern as the group reset; votes stored on the movie doc.
+
+### Import
+- [ ] **Import a Letterboxd watchlist** — upload the exported watchlist CSV (Letterboxd → Settings → Import & Export → Export), show the films with checkboxes (select all / pick a few), then add the chosen ones to the wheel (enriched via TMDB by title+year). Pure front-end (file input + CSV parse + `addMovie`).
+
+### Social / engagement
+- [ ] **Discussion thread per film** — comments/reactions on each watched film, unlocked once reviews reveal *(new Firestore subcollection + rules)*
+- [ ] **Activity feed** — recent "X added / rated …"
+- [x] **Taste compatibility** — who agrees / clashes most, from rating correlations
+
+### Reminders
+- [x] **Add-to-calendar (.ics)** for the watch-by deadline
+- [ ] **Web push / email deadline nudges** *(needs FCM/VAPID keys + the optional Functions backend)*
+
+### Richer film info (details popup)
+- [ ] **Trailer + streaming inline** — "Watch trailer" (TMDB videos) + where-to-watch in the popup
+- [ ] **TMDB recommendations** — "if you liked last week's pick…" on the Films tab
+
+### Stats / wrap-up
+- [ ] **Season recap ("Spinema Wrapped")** — shareable end-of-cycle summary card
+- [x] **Per-film rating breakdown** — half-star histogram on each watched card
+
+### Polish
+- [x] **Spoiler tags** in reviews (`||spoiler||`, click-to-reveal)
+- [ ] **Dark mode** option for themes
+
+---
+
 ## P0 — Security (critical)
 
 - [x] **1. Record the Firebase auth `uid` as the real identity** (foundation for member-locked rules)
