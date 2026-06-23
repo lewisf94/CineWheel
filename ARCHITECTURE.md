@@ -35,6 +35,9 @@ groups/{code}                         # code = 5-char share code (Kahoot-style)
 
   ratings/{movieId__memberId}         # one per member per film
     movieId, memberId, uid, name, score (0.5-5), review, updatedAt
+
+  comments/{commentId}                # per-film discussion (revealed with reviews)
+    movieId, memberId, uid, name, text, createdAt
 ```
 
 No login/accounts: identity is a random `memberId` + display name in

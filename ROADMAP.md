@@ -22,7 +22,7 @@ Working through these; **checked = shipped**. Pure front-end unless noted.
 - [x] **Import a Letterboxd watchlist** — upload the exported watchlist CSV, pick films with checkboxes, add to the wheel (enriched via TMDB by title+year).
 
 ### Social / engagement
-- [ ] **Discussion thread per film** — comments/reactions on each watched film, unlocked once reviews reveal *(new Firestore subcollection + rules)*
+- [x] **Discussion thread per film** — comments on each watched film, revealed with the reviews *(new `comments` subcollection + rules — republish rules)*
 - [x] **Activity feed** — recent "X added / rated …"
 - [x] **Taste compatibility** — who agrees / clashes most, from rating correlations
 

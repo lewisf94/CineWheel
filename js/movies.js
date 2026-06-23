@@ -16,7 +16,7 @@ import {
   useFunctions,
   callFunction,
 } from "./firebase.js";
-import { getMemberId, getName } from "./session.js";
+import { getMemberId, getName, getUid } from "./session.js";
 
 // `meta` is optional TMDB metadata (tmdbId, year, posterPath, runtime, genres).
 export async function addMovie(code, title, meta = null) {
@@ -45,6 +45,23 @@ export async function addMovie(code, title, meta = null) {
 // Remove a not-yet-picked film from the wheel.
 export async function removeMovie(code, movieId) {
   await deleteDoc(doc(db, "groups", code, "movies", movieId));
+}
+
+// ---- per-film discussion (comments revealed with the reviews) --------------
+export async function postComment(code, movieId, text) {
+  const t = (text || "").trim();
+  if (!t) return;
+  await addDoc(collection(db, "groups", code, "comments"), {
+    movieId,
+    memberId: getMemberId(),
+    uid: getUid(),
+    name: getName(),
+    text: t.slice(0, 1000),
+    createdAt: serverTimestamp(),
+  });
+}
+export async function deleteComment(code, commentId) {
+  await deleteDoc(doc(db, "groups", code, "comments", commentId));
 }
 
 // Vote to drop a not-yet-picked film from the wheel. Idempotent (arrayUnion).

@@ -11,7 +11,7 @@ import {
   createGroup, joinGroup, currentSpinnerId, normaliseCode,
   requestReset, approveReset, cancelReset, performReset, setMyServices, kickMember, setStreamFilter,
 } from "./groups.js";
-import { addMovie, removeMovie, commitSpin, markWatchedAck, finalizeRound, setDeadline, setMovieServices, voteRemoveMovie } from "./movies.js";
+import { addMovie, removeMovie, commitSpin, markWatchedAck, finalizeRound, setDeadline, setMovieServices, voteRemoveMovie, postComment, deleteComment } from "./movies.js";
 import {
   renderIdleWheel, chooseWinnerIndex, maybePlaySpin, setMuted, isMuted, resumeAudio,
 } from "./wheel.js";
@@ -54,6 +54,7 @@ const state = {
   members: [],
   movies: [],
   ratings: [],
+  comments: [],
   tab: "wheel",
   unsub: [],
 };
@@ -387,6 +388,7 @@ function leaveGroup() {
   state.members = [];
   state.movies = [];
   state.ratings = [];
+  state.comments = [];
   showLanding();
 }
 
@@ -442,6 +444,12 @@ function subscribe(code) {
   state.unsub.push(
     onSnapshot(collection(db, "groups", code, "ratings"), (snap) => {
       state.ratings = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      scheduleRender();
+    })
+  );
+  state.unsub.push(
+    onSnapshot(collection(db, "groups", code, "comments"), (snap) => {
+      state.comments = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       scheduleRender();
     })
   );
@@ -1595,9 +1603,48 @@ function renderWatchedCard(pane, movie, myId) {
     ${ratingHistogram(scores)}
     <div class="ratings-list">${others || ""}</div>
     <div class="my-rating-mount"></div>
+    ${commentsHtml(movie.id, myId)}
   `;
   pane.appendChild(card);
   mountRatingEditor(card.querySelector(".my-rating-mount"), movie.id, myId, false);
+  wireComments(card, movie.id, myId);
+}
+
+// Discussion thread for a finished film (revealed alongside the reviews).
+function commentsHtml(movieId, myId) {
+  const cmts = state.comments
+    .filter((c) => c.movieId === movieId)
+    .sort((a, b) => ms(a.createdAt, Date.now()) - ms(b.createdAt, Date.now()));
+  const list = cmts.map((c) => `
+    <div class="cmt">
+      <span class="cmt-name">${esc(c.name || "Someone")}</span>
+      <span class="cmt-text">${renderReview(c.text || "")}</span>
+      ${c.memberId === myId ? `<button class="link-btn cmt-del" data-delcmt="${c.id}" title="Delete">delete</button>` : ""}
+    </div>`).join("");
+  return `
+    <div class="comments">
+      <h4 class="cmt-h">Discussion ${cmts.length ? `<span class="muted small">(${cmts.length})</span>` : ""}</h4>
+      <div class="cmt-list">${list || '<p class="muted small">No comments yet — start the conversation.</p>'}</div>
+      <div class="cmt-form">
+        <input class="cmt-input" type="text" maxlength="1000" placeholder="Add a comment…" />
+        <button class="btn small cmt-post">Post</button>
+      </div>
+    </div>`;
+}
+
+function wireComments(card, movieId, myId) {
+  const input = card.querySelector(".cmt-input");
+  const post = () => {
+    const v = input.value.trim();
+    if (!v) return;
+    postComment(state.code, movieId, v);
+    input.value = "";
+  };
+  card.querySelector(".cmt-post").addEventListener("click", post);
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); post(); } });
+  card.querySelectorAll("[data-delcmt]").forEach((b) =>
+    b.addEventListener("click", () => deleteComment(state.code, b.dataset.delcmt))
+  );
 }
 
 // Star widget + review box + save, used for both the sealed current film and

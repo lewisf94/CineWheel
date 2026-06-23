@@ -248,11 +248,12 @@ export async function performReset(code) {
   // In server-authoritative mode the wipe already happened inside approveReset
   // (server-side, when the last approval landed), so there's nothing to do here.
   if (useFunctions) return;
-  const [moviesSnap, ratingsSnap] = await Promise.all([
+  const [moviesSnap, ratingsSnap, commentsSnap] = await Promise.all([
     getDocs(collection(db, "groups", code, "movies")),
     getDocs(collection(db, "groups", code, "ratings")),
+    getDocs(collection(db, "groups", code, "comments")),
   ]);
-  const refs = [...moviesSnap.docs, ...ratingsSnap.docs].map((d) => d.ref);
+  const refs = [...moviesSnap.docs, ...ratingsSnap.docs, ...commentsSnap.docs].map((d) => d.ref);
   const CHUNK = 15;
   for (let i = 0; i < refs.length; i += CHUNK) {
     const batch = writeBatch(db);
