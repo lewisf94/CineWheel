@@ -1049,10 +1049,10 @@ function renderMoviesTab() {
       <details class="lb-help muted small">
         <summary>How do I get the CSV?</summary>
         <ol>
-          <li>On <b>letterboxd.com</b> in a web browser (the export isn't in the phone app), open <b>Settings</b> &rarr; <b>Advanced</b>.</li>
-          <li>Scroll to the bottom and click <b>Export Your Data</b>, then confirm in the popup — it saves a <code>.zip</code>.</li>
-          <li>Unzip it and find <code>watchlist.csv</code> inside.</li>
-          <li>Back here, choose that file with <b>Import the CSV</b> above.</li>
+          <li><b>Use a web browser, not the Letterboxd phone app</b> — the export option only exists on the website (letterboxd.com).</li>
+          <li>Sign in, then open <b>Settings</b> &rarr; <b>Advanced</b>, scroll to the bottom and click <b>Export Your Data</b>. Confirm in the popup — it saves a <code>.zip</code> to your device.</li>
+          <li><b>Unzip it</b> (tap/double-click the <code>.zip</code>) and open the folder inside. You want the file named <code>watchlist.csv</code>.</li>
+          <li>Back here, click <b>Import the CSV</b> above and choose <b>that <code>watchlist.csv</code> file</b> — not the <code>.zip</code>, and not the other CSVs in the folder.</li>
         </ol>
         <p class="lb-tip">Stuck on &ldquo;waiting for download&rdquo;? It's a Letterboxd quirk — try a desktop browser (Chrome/Firefox), turn off ad-blockers/extensions for the site and don't use private mode, then check your Downloads folder.</p>
       </details>
@@ -1170,7 +1170,7 @@ function openImport(films) {
   importFilms = films;
   const body = $("#import-body");
   if (!films.length) {
-    body.innerHTML = `<p class="muted">No films found — make sure it's a Letterboxd watchlist CSV export.</p>`;
+    body.innerHTML = `<p class="muted">No films found. Make sure you unzipped the Letterboxd export and chose the <b>watchlist.csv</b> file inside — not the <code>.zip</code> itself.</p>`;
     show($("#import-modal"));
     return;
   }

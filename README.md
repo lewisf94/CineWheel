@@ -90,10 +90,17 @@ of [`firestore.rules`](./firestore.rules) and `ARCHITECTURE.md`.
    screen for your friends.)*
 3. *(Optional)* For the **"Save your account"** button (keep your club across
    devices / a cleared browser), also add the **Email/Password** provider and,
-   inside it, tick **Email link (passwordless sign-in)** → **Save**. The app's
-   domain (`lewisf94.github.io`, plus `localhost` for local testing) must be in
-   **Authentication → Settings → Authorized domains** — it usually is by default.
-   Skip this and everything else still works; the button just won't send links.
+   inside it, tick **Email link (passwordless sign-in)** → **Save**. *(If sending
+   a link errors with `auth/operation-not-allowed`, this toggle is off.)*
+4. *(If you did step 3)* Add your live domain to the allow-list:
+   **Authentication → Settings → Authorized domains → Add domain →**
+   `lewisf94.github.io`. This is **not** there by default — only
+   `localhost`, `*.firebaseapp.com` and `*.web.app` are — so without it the
+   emailed link is refused on the live site (`auth/unauthorized-continue-uri`).
+   Skip steps 3–4 and everything else still works; the button just won't send links.
+   - *(Optional)* Firebase may suggest enabling **Sign in with Google**. The app
+     doesn't use it, so turning it on alone changes nothing — leave it off unless
+     you want a Google sign-in button added to the code.
 
 ### 6. Paste your config into the app
 1. Open [`js/firebase.js`](./js/firebase.js).
