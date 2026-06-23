@@ -1041,12 +1041,12 @@ function renderMoviesTab() {
       <details class="lb-help muted small">
         <summary>How do I get the CSV?</summary>
         <ol>
-          <li>On <b>letterboxd.com</b> in a web browser (the export isn't in the phone app), click your profile picture (top-right) &rarr; <b>Settings</b>.</li>
-          <li>On the Settings page find the <b>Data</b> section and click <b>Export Your Data</b>.</li>
-          <li>You'll get a <code>.zip</code> (straight away, or via an emailed link for big accounts).</li>
+          <li>On <b>letterboxd.com</b> in a web browser (the export isn't in the phone app), open <b>Settings</b> &rarr; <b>Advanced</b>.</li>
+          <li>Scroll to the bottom and click <b>Export Your Data</b>, then confirm in the popup — it saves a <code>.zip</code>.</li>
           <li>Unzip it and find <code>watchlist.csv</code> inside.</li>
           <li>Back here, choose that file with <b>Import the CSV</b> above.</li>
         </ol>
+        <p class="lb-tip">Stuck on &ldquo;waiting for download&rdquo;? It's a Letterboxd quirk — try a desktop browser (Chrome/Firefox), turn off ad-blockers/extensions for the site and don't use private mode, then check your Downloads folder.</p>
       </details>
       ${tmdbEnabled ? `<p class="tmdb-attribution muted small">${esc(TMDB_STATEMENT)}
         <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a></p>` : ""}
