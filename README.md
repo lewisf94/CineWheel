@@ -101,6 +101,14 @@ of [`firestore.rules`](./firestore.rules) and `ARCHITECTURE.md`.
    - *(Optional)* Firebase may suggest enabling **Sign in with Google**. The app
      doesn't use it, so turning it on alone changes nothing — leave it off unless
      you want a Google sign-in button added to the code.
+   - **Heads-up on deliverability:** Firebase sends these links from a generic
+     `noreply@cinewheel-79636.firebaseapp.com` address that isn't authenticated for
+     your domain, so they **often land in spam** — and mail clients *disable the
+     link* inside spam messages, so it looks like "no link". Tell members to check
+     spam and mark it **"Not spam"** (then the link works). For reliable inbox
+     delivery, set up **custom SMTP** with your own domain under
+     **Authentication → Templates → (pencil) → Customize SMTP settings**; the
+     sender name/subject can be tweaked on that same Templates screen.
 
 ### 6. Paste your config into the app
 1. Open [`js/firebase.js`](./js/firebase.js).

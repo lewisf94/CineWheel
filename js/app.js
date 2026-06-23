@@ -392,7 +392,7 @@ async function handleSendLink() {
   btn.disabled = true;
   try {
     await sendAccountLink(email);
-    msg.textContent = "Sent — check your email for the sign-in link.";
+    msg.textContent = "Sent — check your email, including your spam folder. If it's in spam, mark it \"Not spam\" so the link becomes clickable.";
   } catch (e) {
     const code = e && e.code;
     const friendly = code === "auth/operation-not-allowed"
