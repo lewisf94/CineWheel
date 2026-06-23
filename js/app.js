@@ -654,7 +654,7 @@ function renderFilmCard() {
         <span class="deadline-pill" id="countdown">${countdownText(countdownDeadline)}</span>
         <span class="muted small">watch by ${new Date(countdownDeadline).toLocaleDateString()}</span>
       </div>
-      <div class="cal-row"><button type="button" class="text-link" id="add-cal">Add deadline to calendar</button> <a class="text-link" id="add-gcal" target="_blank" rel="noopener">Google</a></div>
+      <div class="cal-row"><button type="button" class="text-link" id="add-cal">Add to calendar</button> <a class="text-link" id="add-gcal" target="_blank" rel="noopener">Google Calendar</a></div>
       ${isSpinner ? `<div class="deadline-edit"><label class="small muted">Change deadline</label><input type="date" id="deadline-input" value="${dateInputValue(countdownDeadline)}"></div>` : ""}
       <div class="round-progress">
         <div class="rp-item"><div class="rp-count">${rs.watchedCount}<span class="of"> / ${rs.total}</span></div><div class="rp-label">Watched</div></div>
@@ -1553,17 +1553,19 @@ const isIOS = () =>
 function addToCalendar(title, deadlineMs) {
   if (!deadlineMs) return;
   const ics = buildIcs(title, deadlineMs);
-  const a = document.createElement("a");
   if (isIOS()) {
-    a.href = "data:text/calendar;charset=utf-8," + encodeURIComponent(ics);
-    a.target = "_blank";
-    a.rel = "noopener";
-  } else {
-    a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
-    a.download = "spinema-" + (title || "film").replace(/[^a-z0-9]+/gi, "-").toLowerCase() + ".ics";
+    // iOS: NAVIGATE to the calendar URL (Safari hands it to Calendar). A
+    // download-style link instead drops it into Files, which is the friction
+    // we're avoiding.
+    window.location.href = "data:text/calendar;charset=utf-8," + encodeURIComponent(ics);
+    return;
   }
+  const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "spinema-" + (title || "film").replace(/[^a-z0-9]+/gi, "-").toLowerCase() + ".ics";
   document.body.appendChild(a); a.click(); a.remove();
-  if (a.download) setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 function gcalUrl(title, deadlineMs) {
   const p = new URLSearchParams({
