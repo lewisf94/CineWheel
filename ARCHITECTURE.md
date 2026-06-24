@@ -154,8 +154,12 @@ segment. Sound is WebAudio; the win burst is canvas-confetti.
   a uid in the group's **`bannedUids`** (set by a kick) is refused — so a kicked
   member with a stable/saved uid can't rejoin via a raw API call (a *fresh
   anonymous* uid still could; that needs server-side join).
-- **Own rating only.** A member may create/update only the rating carrying
-  their own `uid`. No client deletes of the group doc.
+- **Own rating/comment only.** A member may create/update only a rating or
+  comment carrying their own `uid` **and** whose denormalised `memberId`
+  resolves to a member record owned by that uid (`ownsMember`) — so you can't
+  author one under another member's memberId/name and impersonate them. A
+  rating's doc id is pinned to `movieId__memberId` (one per member per film).
+  No client deletes of the group doc.
 - **Bounded writes.** The rules cap field sizes — rating `score` is a number
   0.5–5, review ≤2000 chars, comment text ≤2000, member/group name ≤200 — so a
   member can't write junk scores or stuff oversized documents.

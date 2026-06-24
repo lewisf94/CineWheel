@@ -68,6 +68,15 @@ need **publishing** in the console). **[console]** = your action, no code.
   stuff oversized docs: rating `score` must be a number 0.5–5, review ≤2000 chars, comment
   text ≤2000, member/group name ≤200. Plus: the hardened rules were **missing a `comments`
   match entirely** (comments would be denied in server-authoritative mode) — added.
+- [x] **SH-8. Pin rating/comment author to the caller.** Ratings and comments only checked
+  that the doc's `uid` was the caller's — not its denormalised `memberId`/`name`. A member
+  could therefore author a rating or comment under **another member's** memberId/name and
+  impersonate them in the revealed reviews/comments (and skew the per-member stats). New
+  `ownsMember(code)` rule helper requires the doc's `memberId` to resolve to a member record
+  whose `uid` is the caller's; ratings additionally pin the **doc id** to `movieId__memberId`
+  (one rating per member per film, no stuffing under arbitrary ids). Both rules files.
+  *Residual:* a member can still create extra member docs under their own uid (sybil) — that
+  needs server-side join (same gap as SH-3); this closes the easy impersonation path.
 - [ ] **SH-1. [console] Turn on App Check (reCAPTCHA v3).** Biggest single lever: without it
   the public API key + anonymous auth let anyone script Firestore directly, bypassing the
   site (code brute-forcing, abuse, cost). Scaffolded already (P0 #5) — register the site,
@@ -83,7 +92,7 @@ need **publishing** in the console). **[console]** = your action, no code.
   v3 keys can't be domain-locked. Standard for client TMDB apps; proxy via a Function only
   if it's ever abused. Low. (Plus P0 #6: optional HTTP-referrer restriction on the API key.)
 
-> **Publish step:** SH-2/4/6 are in the rules files but **don't auto-deploy**. Test in the
+> **Publish step:** SH-2/4/6/8 are in the rules files but **don't auto-deploy**. Test in the
 > Firebase Emulator, then paste `firestore.rules` (or `functions/firestore.rules` in
 > server-authoritative mode) into Build → Firestore → Rules → Publish.
 

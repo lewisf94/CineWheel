@@ -38,6 +38,14 @@ service cloud.firestore {
         && (!('review' in request.resource.data)
             || request.resource.data.review.size() <= 2000);
     }
+    // Pins a rating/comment's denormalised memberId to a member doc owned by the
+    // caller's uid, so a member can't author one under another member's
+    // memberId/name and impersonate them. (See root firestore.rules for detail.)
+    function ownsMember(code) {
+      return request.resource.data.memberId is string
+        && get(/databases/$(database)/documents/groups/$(code)/members/$(request.resource.data.memberId))
+             .data.get('uid', '') == request.auth.uid;
+    }
 
     match /groups/{code} {
       function existingUids() {
@@ -109,11 +117,14 @@ service cloud.firestore {
         allow read:   if isMember(code);
         allow create: if isMember(code)
                       && request.resource.data.uid == request.auth.uid
+                      && ownsMember(code)
+                      && ratingId == request.resource.data.movieId + '__' + request.resource.data.memberId
                       && validRating();
         allow update: if isMember(code)
                       && request.resource.data.uid == request.auth.uid
                       && (!('uid' in resource.data)
                           || resource.data.uid == request.auth.uid)
+                      && ownsMember(code)
                       && validRating();
         // Deletes happen only via the reset function (Admin SDK).
         allow delete: if false;
@@ -126,11 +137,13 @@ service cloud.firestore {
         allow read:   if isMember(code);
         allow create: if isMember(code)
                       && request.resource.data.uid == request.auth.uid
+                      && ownsMember(code)
                       && request.resource.data.text is string
                       && request.resource.data.text.size() <= 2000;
         allow update: if isMember(code)
                       && request.resource.data.uid == request.auth.uid
                       && resource.data.uid == request.auth.uid
+                      && ownsMember(code)
                       && (!('text' in request.resource.data)
                           || request.resource.data.text.size() <= 2000);
         allow delete: if isMember(code) && resource.data.uid == request.auth.uid;
