@@ -1,6 +1,6 @@
 # CineSpin
 
-**Live app → <https://lewisf94.github.io/spinema/>**
+**Live app → <https://lewisf94.github.io/cinespin/>**
 
 A film-club wheel for groups of friends. Add films to a wheel, take turns each
 week spinning to pick what to watch, set a watch-by deadline, then rate (in
@@ -109,6 +109,12 @@ of [`firestore.rules`](./firestore.rules) and `ARCHITECTURE.md`.
      delivery, set up **custom SMTP** with your own domain under
      **Authentication → Templates → (pencil) → Customize SMTP settings**; the
      sender name/subject can be tweaked on that same Templates screen.
+   - **Brand the email:** the sign-in message takes the app name from your
+     project's **public-facing name** (defaults to the project id, e.g.
+     `cinewheel-79636`). Set it under **Project Settings → General →
+     Public-facing name** (e.g. `CineSpin`) so the email reads "Sign in to
+     CineSpin…" instead of the raw id. The sender *address* still shows the
+     project id unless you use custom SMTP (above).
    - **If you restrict the Web API key by HTTP referrer** (the optional hardening
      in step 9 / ROADMAP #6) you **must also allow the auth handler's domain**, or
      the sign-in link 403s with `API_KEY_HTTP_REFERRER_BLOCKED`. In **Google Cloud
@@ -159,7 +165,7 @@ Cloud Functions) — there's a generous free tier, but a card on file.
 3. Under **Build and deployment → Source**, choose **Deploy from a branch**.
 4. Pick branch **`main`**, folder **`/ (root)`**, and **Save**.
 5. After a minute your site is live at:
-   **`https://lewisf94.github.io/spinema/`**
+   **`https://lewisf94.github.io/cinespin/`**
 
 Share that link (or the in-app club code) with your friends and you're set.
 
@@ -171,7 +177,7 @@ Because the app uses JavaScript modules, open it through a local web server
 (not by double-clicking the file). With your Firebase config already filled in:
 
 ```bash
-cd spinema
+cd cinespin
 python3 -m http.server 8000
 # then open http://localhost:8000
 ```
