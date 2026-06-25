@@ -3,7 +3,7 @@
 //  The look is a CSS [data-theme="…"] block (+ a wheel style in wheel.js); the
 //  light/dark mode is a separate [data-mode] attribute, toggled independently.
 //  Both are remembered in localStorage; changing either fires
-//  "spinema:themechange" so the app redraws the wheel.
+//  "cinespin:themechange" so the app redraws the wheel.
 // ============================================================================
 
 const THEMES = [
@@ -11,19 +11,29 @@ const THEMES = [
   { id: "festival", name: "Cinema",  bg: "#ece2cd", darkBg: "#241d15", accent: "#c2482e" },
   { id: "strokes",  name: "Web 1.0", bg: "#0a1aa8", darkBg: "#05083a", accent: "#cc1f1f" },
 ];
-const KEY = "spinema_theme";
-const MODE_KEY = "spinema_mode";
+const KEY = "cinespin_theme";
+const MODE_KEY = "cinespin_mode";
 const DEFAULT = "a24";
 
+// theme.js loads as its own module before app.js (so before session.js's
+// localStorage migration), so read legacy keys inline. App was "cinewheel_",
+// then "spinema_", now "cinespin_".
 function saved() {
   try {
-    const id = localStorage.getItem(KEY) || localStorage.getItem("cinewheel_theme") || DEFAULT;
+    const id = localStorage.getItem(KEY)
+      || localStorage.getItem("spinema_theme")
+      || localStorage.getItem("cinewheel_theme") || DEFAULT;
     return THEMES.some((t) => t.id === id) ? id : DEFAULT; // old "noir" -> default
   } catch (_) { return DEFAULT; }
 }
 function remember(id) { try { localStorage.setItem(KEY, id); } catch (_) {} }
 function savedMode() {
-  try { return localStorage.getItem(MODE_KEY) === "dark" ? "dark" : "light"; } catch (_) { return "light"; }
+  try {
+    const m = localStorage.getItem(MODE_KEY)
+      || localStorage.getItem("spinema_mode")
+      || localStorage.getItem("cinewheel_mode");
+    return m === "dark" ? "dark" : "light";
+  } catch (_) { return "light"; }
 }
 function rememberMode(m) { try { localStorage.setItem(MODE_KEY, m); } catch (_) {} }
 
@@ -42,13 +52,13 @@ function apply(id) {
   if (!THEMES.some((t) => t.id === id)) id = DEFAULT;
   root.setAttribute("data-theme", id);
   paintMeta();
-  window.dispatchEvent(new CustomEvent("spinema:themechange", { detail: id }));
+  window.dispatchEvent(new CustomEvent("cinespin:themechange", { detail: id }));
 }
 function applyMode(m) {
   root.setAttribute("data-mode", m === "dark" ? "dark" : "light");
   paintMeta();
   updateModeBtn();
-  window.dispatchEvent(new CustomEvent("spinema:themechange", { detail: curTheme() }));
+  window.dispatchEvent(new CustomEvent("cinespin:themechange", { detail: curTheme() }));
 }
 
 function updateModeBtn() {

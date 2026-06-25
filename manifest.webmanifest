@@ -1,6 +1,6 @@
 {
-  "name": "Spinema",
-  "short_name": "Spinema",
+  "name": "CineSpin",
+  "short_name": "CineSpin",
   "description": "A film club on a wheel — add films, spin to pick the week's film, then rate and review.",
   "start_url": "./",
   "scope": "./",

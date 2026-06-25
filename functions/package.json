@@ -1,6 +1,6 @@
 {
-  "name": "spinema-functions",
-  "description": "Server-authoritative round/turn/reset invariants for Spinema",
+  "name": "cinespin-functions",
+  "description": "Server-authoritative round/turn/reset invariants for CineSpin",
   "private": true,
   "engines": {
     "node": "20"

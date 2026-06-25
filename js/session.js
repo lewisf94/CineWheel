@@ -18,21 +18,25 @@ import {
   linkWithCredential,
 } from "./firebase.js";
 
-const MEMBER_ID_KEY = "spinema_member_id";
-const NAME_KEY = "spinema_name";
-const LAST_GROUP_KEY = "spinema_last_group";
-const EMAIL_KEY = "spinema_email_for_signin";
+const MEMBER_ID_KEY = "cinespin_member_id";
+const NAME_KEY = "cinespin_name";
+const LAST_GROUP_KEY = "cinespin_last_group";
+const EMAIL_KEY = "cinespin_email_for_signin";
 
-// One-time migration: copy any legacy "cinewheel_" localStorage keys to the new
-// "spinema_" names so existing browsers keep their identity, name and last group.
+// One-time migration: copy any legacy localStorage keys (the app was previously
+// "cinewheel_", then "spinema_") to the current "cinespin_" names so existing
+// browsers keep their identity, name, last group, theme and region. Runs at
+// module load, before theme.js / tmdb.js read their keys.
 try {
+  const legacy = ["cinewheel_", "spinema_"];
   const old = [];
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
-    if (k && k.indexOf("cinewheel_") === 0) old.push(k);
+    const pre = k && legacy.find((p) => k.indexOf(p) === 0);
+    if (pre) old.push([k, pre]);
   }
-  old.forEach((k) => {
-    const nk = "spinema_" + k.slice(10);
+  old.forEach(([k, pre]) => {
+    const nk = "cinespin_" + k.slice(pre.length);
     if (localStorage.getItem(nk) === null) localStorage.setItem(nk, localStorage.getItem(k));
   });
 } catch (_) {}

@@ -1,16 +1,20 @@
-# Spinema — status & handoff
+# CineSpin — status & handoff
 
 _A snapshot for picking up in a fresh chat/session. The living backlog is in
 [ROADMAP.md](./ROADMAP.md); the technical reference is in
 [ARCHITECTURE.md](./ARCHITECTURE.md); end-user setup is in [README.md](./README.md)._
 
-**Last updated:** 2026-06-21.
+**Last updated:** 2026-06-25.
 
 ## Where things stand
 
 - **Live:** static site on GitHub Pages at <https://lewisf94.github.io/spinema/>.
-  The repo was renamed `cinewheel` → `spinema`; the app uses **relative paths**,
-  so the URL prefix doesn't matter.
+  **Three names, on purpose:** the user-facing **brand is "CineSpin"** (was
+  "Spinema", was "cinewheel"); the **GitHub repo stays `spinema`** (so the Pages
+  URL/path is `/spinema/` — the app uses **relative paths**, so the prefix doesn't
+  matter); the **Firebase project stays `cinewheel-79636`**. Renaming the repo or
+  project isn't needed and would break the URL / config. localStorage keys were
+  migrated to `cinespin_*` (with fallbacks from the old `spinema_*`/`cinewheel_*`).
 - **Backend:** Firebase project **`cinewheel-79636`** — kept on purpose (it's an
   internal id, never shown to users; **do NOT rename it**). Config in `js/firebase.js`.
 - **Code:** the whole prioritized roadmap (P0–P3) plus several P4 features are
