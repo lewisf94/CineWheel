@@ -23,24 +23,6 @@ const NAME_KEY = "cinespin_name";
 const LAST_GROUP_KEY = "cinespin_last_group";
 const EMAIL_KEY = "cinespin_email_for_signin";
 
-// One-time migration: copy any legacy localStorage keys (the app was previously
-// "cinewheel_", then "spinema_") to the current "cinespin_" names so existing
-// browsers keep their identity, name, last group, theme and region. Runs at
-// module load, before theme.js / tmdb.js read their keys.
-try {
-  const legacy = ["cinewheel_", "spinema_"];
-  const old = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    const pre = k && legacy.find((p) => k.indexOf(p) === 0);
-    if (pre) old.push([k, pre]);
-  }
-  old.forEach(([k, pre]) => {
-    const nk = "cinespin_" + k.slice(pre.length);
-    if (localStorage.getItem(nk) === null) localStorage.setItem(nk, localStorage.getItem(k));
-  });
-} catch (_) {}
-
 // The Firebase anonymous auth uid — the identity the security rules trust.
 // Available once ensureAuth() has resolved (init() awaits it before any writes).
 export function getUid() {

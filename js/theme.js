@@ -15,23 +15,16 @@ const KEY = "cinespin_theme";
 const MODE_KEY = "cinespin_mode";
 const DEFAULT = "a24";
 
-// theme.js loads as its own module before app.js (so before session.js's
-// localStorage migration), so read legacy keys inline. App was "cinewheel_",
-// then "spinema_", now "cinespin_".
 function saved() {
   try {
-    const id = localStorage.getItem(KEY)
-      || localStorage.getItem("spinema_theme")
-      || localStorage.getItem("cinewheel_theme") || DEFAULT;
+    const id = localStorage.getItem(KEY) || DEFAULT;
     return THEMES.some((t) => t.id === id) ? id : DEFAULT; // old "noir" -> default
   } catch (_) { return DEFAULT; }
 }
 function remember(id) { try { localStorage.setItem(KEY, id); } catch (_) {} }
 function savedMode() {
   try {
-    const m = localStorage.getItem(MODE_KEY)
-      || localStorage.getItem("spinema_mode")
-      || localStorage.getItem("cinewheel_mode");
+    const m = localStorage.getItem(MODE_KEY);
     return m === "dark" ? "dark" : "light";
   } catch (_) { return "light"; }
 }

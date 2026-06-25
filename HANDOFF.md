@@ -15,7 +15,7 @@ This trips people up, so read it first:
 | **Brand** (what users see) | **CineSpin** | Was "Spinema", before that "cinewheel". Reads cleanly (Cine·Spin). |
 | **GitHub repo** | **`cinespin`** | Renamed from `spinema` (2026-06-25). Live URL → `https://lewisf94.github.io/cinespin/`. |
 | **Firebase project** | **`cinewheel-79636`** | **Do NOT rename** — internal id, never shown to users; renaming breaks the config. |
-| **localStorage keys** | `cinespin_*` | Migrated from old `spinema_*` / `cinewheel_*` (fallbacks in `session.js` + `theme.js`). |
+| **localStorage keys** | `cinespin_*` | The old `spinema_*` / `cinewheel_*` keys are gone — no migration (the app was test-only before the rename). |
 
 The app uses **relative paths** everywhere (no hardcoded domain/path), so the
 Pages URL changing from `/spinema/` to `/cinespin/` does not break anything.
