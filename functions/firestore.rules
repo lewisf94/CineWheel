@@ -79,11 +79,12 @@ service cloud.firestore {
                     && request.resource.data.memberUids.size() == 1
                     && (!('name' in request.resource.data)
                         || request.resource.data.name.size() <= 200);
-      // Members may only rename the club; joining may only append a uid.
+      // Members may rename the club and flip the low-stakes wheel display
+      // toggles (streamFilter / wheelCapped); joining may only append a uid.
       // currentFilm / currentSpinnerIndex / lastSpin / resetRequest are
       // written exclusively by the Cloud Functions.
       allow update: if amJoining()
-                    || (amMember() && changedKeys().hasOnly(['name']));
+                    || (amMember() && changedKeys().hasOnly(['name', 'streamFilter', 'wheelCapped']));
       allow delete: if false;
 
       match /members/{memberId} {

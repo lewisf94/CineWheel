@@ -148,7 +148,7 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
 .wheel-status { margin-top: 12px; color: var(--muted); }
 /* A themed pill (tokens only, so it fits every theme + dark mode) instead of a
    bare browser checkbox floating under the Spin button. */
-.stream-filter { display: inline-flex; align-items: center; gap: 9px; margin-top: 14px; padding: 8px 14px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--panel-2); color: var(--text); font-family: var(--sans); font-size: 0.85rem; cursor: pointer; }
+.stream-filter { display: flex; width: fit-content; align-items: center; gap: 9px; margin: 14px auto 0; padding: 8px 14px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--panel-2); color: var(--text); font-family: var(--sans); font-size: 0.85rem; cursor: pointer; }
 .stream-filter:hover { border-color: var(--accent); }
 .stream-filter:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* Square checkbox (native accent-color boxes have unremovable rounded corners),

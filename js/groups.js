@@ -183,6 +183,13 @@ export async function setStreamFilter(code, on) {
   await updateDoc(doc(db, "groups", code), { streamFilter: !!on });
 }
 
+// Toggle "limit the wheel to a fixed number of films" for the whole club, so a
+// big wheel stays readable. Club-wide (not per-user) so everyone sees the same
+// wheel and spins from the same pool no matter whose turn it is.
+export async function setWheelCap(code, capped) {
+  await updateDoc(doc(db, "groups", code), { wheelCapped: !!capped });
+}
+
 // Record which streaming services this member subscribes to (ids from
 // STREAMING_SERVICES). Used to show who can actually watch a film. Merges, so it
 // never clobbers the member's name/uid.

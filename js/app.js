@@ -9,7 +9,7 @@ import {
 } from "./session.js";
 import {
   createGroup, joinGroup, currentSpinnerId, normaliseCode,
-  requestReset, approveReset, cancelReset, performReset, setMyServices, kickMember, setStreamFilter,
+  requestReset, approveReset, cancelReset, performReset, setMyServices, kickMember, setStreamFilter, setWheelCap,
 } from "./groups.js";
 import { addMovie, removeMovie, commitSpin, markWatchedAck, finalizeRound, setDeadline, setMovieServices, voteRemoveMovie, postComment, deleteComment, startVote, submitBallot, cancelVote, commitVoteWinner } from "./movies.js";
 import {
@@ -67,6 +67,9 @@ let renderTimer = null; // coalesces bursts of listener-driven renders
 // commits immediately; every other client waits this long and only steps in if
 // the owner didn't, so we don't have every browser racing the same transaction.
 const FALLBACK_MS = 4000;
+// When the club opts to cap the wheel, show at most this many films (the oldest
+// on the wheel) so a big list stays readable. Toggleable per club; see renderWheelTab.
+const WHEEL_CAP = 20;
 
 // ---- boot ------------------------------------------------------------------
 async function init() {
@@ -873,13 +876,22 @@ function renderWheelTab() {
   const spinnerId = currentSpinnerId(state.group);
   const isMyTurn = spinnerId === myId && !state.group?.currentFilm;
   const filterOn = tmdbEnabled && !!state.group?.streamFilter;
+  const capOn = state.group?.wheelCapped !== false; // default: capped, so a big wheel stays readable
   let movies = wheelMovies();
   const allCount = movies.length;
   if (filterOn) {
     ensureCoverage(movies);                              // async; re-renders when ready
     movies = movies.filter((m) => filmEligible(m) !== false); // keep eligible + still-loading
   }
-  const hiddenCount = allCount - movies.length;
+  const hiddenCount = allCount - movies.length;          // hidden by the stream filter
+  // Cap the wheel (after filtering) so it doesn't turn into a cluttered ring of
+  // slivers. movies is oldest-first, so the longest-waiting films stay on; the
+  // rest rotate in as these get watched and leave the wheel.
+  let capHidden = 0;
+  if (capOn && movies.length > WHEEL_CAP) {
+    capHidden = movies.length - WHEEL_CAP;
+    movies = movies.slice(0, WHEEL_CAP);
+  }
 
   const order = orderedMembers();
   const adminId = groupAdminId();
@@ -912,6 +924,7 @@ function renderWheelTab() {
         ? "No films everyone can stream — add some, or turn off the filter."
         : wheelStatus(isMyTurn, movies.length, spinnerId)}</p>
       ${tmdbEnabled ? `<label class="stream-filter"><input type="checkbox" id="stream-filter-toggle"${filterOn ? " checked" : ""}> Only spin films everyone can stream</label>${filterOn && hiddenCount ? `<p class="muted small filter-note">${hiddenCount} hidden — not everyone can stream ${hiddenCount > 1 ? "them" : "it"}.</p>` : ""}` : ""}
+      ${allCount > WHEEL_CAP ? `<label class="stream-filter wheel-cap"><input type="checkbox" id="wheel-cap-toggle"${capOn ? " checked" : ""}> Limit the wheel to ${WHEEL_CAP} films</label>${capOn && capHidden ? `<p class="muted small filter-note">Showing ${WHEEL_CAP} of ${WHEEL_CAP + capHidden} — the rest rotate in as films get watched.</p>` : ""}` : ""}
       ${isMyTurn && movies.length >= 2 ? `<div class="vote-start"><button class="btn" id="start-vote-btn">Don't want to leave it to chance? Vote instead</button></div>` : ""}
     </div>
     ${order.length ? `<div class="turn-order"><div class="small">Turn order</div><div class="turn-chips">${orderHtml}</div></div>` : ""}
@@ -921,6 +934,9 @@ function renderWheelTab() {
 
   const sf = $("#stream-filter-toggle");
   if (sf) sf.addEventListener("change", () => setStreamFilter(state.code, sf.checked));
+
+  const cap = $("#wheel-cap-toggle");
+  if (cap) cap.addEventListener("change", () => setWheelCap(state.code, cap.checked));
 
   const sv = $("#start-vote-btn");
   if (sv) sv.addEventListener("click", () => startVote(state.code, myId, getName(), sampleShortlist(movies)));
