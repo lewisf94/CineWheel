@@ -84,7 +84,12 @@ service cloud.firestore {
       // currentFilm / currentSpinnerIndex / lastSpin / resetRequest are
       // written exclusively by the Cloud Functions.
       allow update: if amJoining()
-                    || (amMember() && changedKeys().hasOnly(['name', 'streamFilter', 'wheelCapped']));
+                    || (amMember()
+                        && changedKeys().hasOnly(['name', 'streamFilter', 'wheelCapped'])
+                        && request.resource.data.get('streamFilter', false) is bool
+                        && request.resource.data.get('wheelCapped', false) is bool
+                        && (!('name' in request.resource.data)
+                            || request.resource.data.name.size() <= 200));
       allow delete: if false;
 
       match /members/{memberId} {

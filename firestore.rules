@@ -123,7 +123,21 @@ service cloud.firestore {
       }
 
       match /movies/{movieId} {
-        allow read, write: if isMember(code);
+        allow read:   if isMember(code);
+        allow create: if isMember(code)
+                      && request.resource.data.status == 'wheel'
+                      && (!('title' in request.resource.data)
+                          || request.resource.data.title.size() <= 300);
+        // Members run the round client-side (spin / watched-acks / finalize /
+        // vote-off), so field updates stay open — but a film's identity is
+        // immutable: nobody can rewrite another member's title or steal the
+        // "added by" credit. (Delete stays open: the adder's remove, vote-off,
+        // and the group reset all need it; full delete-protection needs Functions.)
+        allow update: if isMember(code)
+                      && request.resource.data.get('title', '') == resource.data.get('title', '')
+                      && request.resource.data.get('addedByMemberId', '') == resource.data.get('addedByMemberId', '')
+                      && request.resource.data.get('addedByName', '') == resource.data.get('addedByName', '');
+        allow delete: if isMember(code);
       }
 
       match /ratings/{ratingId} {

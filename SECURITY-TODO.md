@@ -47,22 +47,23 @@ items only the project owner can do._
   member **ids** on the group doc and resolve names from the member-locked subcollection.
   _(Touches `js/groups.js` createGroup, `js/movies.js` commitSpin/commitVoteWinner, and the render in `js/app.js`.)_
 
-- [ ] **6. [code/claude] MEDIUM — pin film edits/deletes to the adder.**
-  `movies/{id}: allow read, write: if isMember(code)` (`firestore.rules:126`) lets *any* member
-  overwrite or delete *anyone's* films (unlike ratings/comments, which you pinned in SH-8). A single
-  griefing/compromised member can wipe the wheel. Restrict film `update`/`delete` to the adder (+ admin),
-  keeping `watchedBy`/`removeVotes`-style group actions allowed. _(Rules change; mirror in `functions/firestore.rules`.)_
+- [x] **6. [code/claude] MEDIUM — make a film's identity immutable.** Done in `firestore.rules`.
+  Split the `movies` rule into create/update/delete: `title`/`addedByMemberId`/`addedByName` can't be
+  changed after creation (no rewriting another member's title or stealing authorship), and create
+  requires `status=='wheel'` + a title cap. Field updates (watchedBy / removeVotes / serviceOverride /
+  spin / finalize) stay open because members run the round client-side, and **delete stays open** (the
+  adder's remove, vote-off, and the reset all need it). _Full delete-griefing protection needs
+  server-authoritative (Functions) mode — see #11 / SH-7._
+  **⚠ Requires re-publishing the live rules (#1) to take effect.**
 
-- [ ] **7. [code/claude] LOW — add a Referrer-Policy meta.**
-  The "Invite link" puts the club code in a URL. Add
+- [x] **7. [code/claude] LOW — add a Referrer-Policy meta.** Done — added
   `<meta name="referrer" content="strict-origin-when-cross-origin">` to `index.html` `<head>` so the
-  code can never leak via the `Referer` header to TMDB/CDNs (belt-and-suspenders; modern browsers
-  already default to this).
+  club code in an invite link can't leak via `Referer` to TMDB/CDNs. (Auto-deploys via Pages.)
 
-- [ ] **8. [code/claude] LOW — harden the optional hardened rules' value types.**
-  In `functions/firestore.rules:86`, the member-writable allowlist (`name`, `streamFilter`,
-  `wheelCapped`) doesn't type-check values. Add `… is bool` guards for the two toggles (and a `name`
-  length cap on update). Only matters if you ever enable Functions mode, but cheap and consistent.
+- [x] **8. [code/claude] LOW — harden the optional hardened rules' value types.** Done in
+  `functions/firestore.rules`: the member-writable allowlist (`name`, `streamFilter`, `wheelCapped`)
+  now requires the two toggles to be `bool` and caps `name` length on update. (Only active if you ever
+  enable Functions mode.)
 
 ---
 
