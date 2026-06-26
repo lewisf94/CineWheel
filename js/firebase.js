@@ -54,7 +54,7 @@ const firebaseConfig = {
 // register the site in the Firebase console (App Check -> reCAPTCHA v3), paste
 // the SITE key below, then start enforcement in "monitor" mode and flip to
 // enforce once traffic looks clean. See README.md.
-const recaptchaV3SiteKey = "";
+const recaptchaV3SiteKey = "6LcR0DYtAAAAAG56hre2vAygrXMRzfMdgwBoCz_P";
 
 // Optional Web Push (Firebase Cloud Messaging) for deadline / turn reminders.
 // OFF by default — leave this blank and nothing changes (the Messaging SDK is

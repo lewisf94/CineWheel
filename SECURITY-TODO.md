@@ -34,7 +34,10 @@ items only the project owner can do._
   - Paste it into `recaptchaV3SiteKey` in `js/firebase.js`, commit, deploy. _(I can do this paste step once you have the key — see #2b.)_
   - App Check → **APIs** → enforce for **Cloud Firestore** (and Auth): start in **Monitor**, watch a day or two that real `lewisf94.github.io` traffic passes, **then** flip to **Enforce**. (Going straight to Enforce with a misconfigured key can lock out real users.)
   - README **step 7** has click-by-click.
-  - [ ] **2b. [code/claude]** Once you have the site key, paste it in and verify the scaffolding wiring is correct.
+  - [x] **2b. [code/claude]** Site key wired into `js/firebase.js` (`recaptchaV3SiteKey`) and pushed — the
+    app now initialises App Check and sends reCAPTCHA v3 tokens. **Remaining (you):** in the console, watch
+    Cloud Firestore's App Check metrics show *verified* traffic, then press **Enforce** (it's un-enforced =
+    "monitor" until you do).
 
 ---
 
