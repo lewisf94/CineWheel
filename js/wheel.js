@@ -315,11 +315,15 @@ function playSpinOverlay(spin, onDone) {
   const ctx = setupHiDPI(canvas, size);
   const seg = (2 * Math.PI) / n;
 
-  // Land the winner's centre under the top pointer (-90°), plus full spins.
+  // Land somewhere INSIDE the winning wedge (not dead-centre) under the top
+  // pointer (-90°), plus full spins. The offset is derived from the seed so every
+  // client lands identically, and is kept clear of the wedge edges so the pointer
+  // never straddles a seam (which would read as the wrong film).
   const pointer = -Math.PI / 2;
-  const baseCentre = (winnerIndex + 0.5) * seg;
+  const landFrac = 0.25 + (((spin.seed || 0) % 1000) / 1000) * 0.5; // 0.25–0.75 of the wedge
+  const landAngle = (winnerIndex + landFrac) * seg;
   const spins = 8 + (Math.floor((spin.seed || 0) / 137) % 3); // deterministic flair (8–10 turns)
-  let aligned = pointer - baseCentre;
+  let aligned = pointer - landAngle;
   aligned = ((aligned % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
   const target = spins * 2 * Math.PI + aligned;
 
