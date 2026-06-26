@@ -26,7 +26,9 @@ items only the project owner can do._
   - Skim **Firestore → Usage** for unexpected read/write volume.
   - After publishing, have everyone **re-join once** (so each member's uid is recorded in `memberUids`).
 
-- [ ] **2. [console/you] HIGH — enable App Check (reCAPTCHA v3).** The "CAPTCHA option" you saw.
+- [x] **2. [console/you] HIGH — enable App Check (reCAPTCHA v3).** DONE & verified: site key live,
+  metrics showed 100% verified (33/33, 0 unverified), enforcement ON for Cloud Firestore, and the app
+  loads cleanly in an incognito window with enforcement on. The "CAPTCHA option" you saw.
   Without it, the public API key + anonymous auth let anyone script Firestore directly (code
   brute-forcing, scraping, cost abuse), bypassing the site. reCAPTCHA **v3 is invisible** (no user
   challenge). Code is already scaffolded (`enableAppCheck()` + `recaptchaV3SiteKey` in `js/firebase.js`).
@@ -34,10 +36,8 @@ items only the project owner can do._
   - Paste it into `recaptchaV3SiteKey` in `js/firebase.js`, commit, deploy. _(I can do this paste step once you have the key — see #2b.)_
   - App Check → **APIs** → enforce for **Cloud Firestore** (and Auth): start in **Monitor**, watch a day or two that real `lewisf94.github.io` traffic passes, **then** flip to **Enforce**. (Going straight to Enforce with a misconfigured key can lock out real users.)
   - README **step 7** has click-by-click.
-  - [x] **2b. [code/claude]** Site key wired into `js/firebase.js` (`recaptchaV3SiteKey`) and pushed — the
-    app now initialises App Check and sends reCAPTCHA v3 tokens. **Remaining (you):** in the console, watch
-    Cloud Firestore's App Check metrics show *verified* traffic, then press **Enforce** (it's un-enforced =
-    "monitor" until you do).
+  - [x] **2b. [code/claude]** Site key wired into `js/firebase.js` (`recaptchaV3SiteKey`) and pushed; the
+    app initialises App Check and sends reCAPTCHA v3 tokens. Verified end-to-end (see #2).
 
 ---
 
