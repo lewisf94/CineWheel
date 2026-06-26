@@ -647,11 +647,11 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
   .copy-label { display: none; }
   .group-name { max-width: 50vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  /* The right-hand utility chips collapse behind a "Menu" button: the brand and
-     the Menu button share the top row; the club name + code + invite drop to a
-     full-width second row; the chips themselves become a dropdown panel. */
-  .menu-btn { display: inline-flex; order: 2; margin-left: auto; }
-  #group-meta { order: 3; flex-basis: 100%; }
+  /* The right-hand utility chips collapse behind a "Menu" button. Menu is the
+     LAST item (pushed right), so it always lands on the final row — whether the
+     bar fits on one line or the club meta wraps to the next — and the dropdown
+     opens directly beneath it with no gap. */
+  .menu-btn { display: inline-flex; margin-left: auto; }
   .topbar-right {
     position: absolute; top: 100%; right: 14px; margin: 0; gap: 6px;
     display: none; flex-direction: column; align-items: stretch;
