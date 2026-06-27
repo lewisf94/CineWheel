@@ -620,10 +620,10 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
 
 /* Default — monochrome, inverted */
 [data-theme="a24"][data-mode="dark"] {
-  --bg: #0e0f13; --bg-soft: #16181f; --panel: #14151a; --panel-2: #1d2029;
-  --line: #3a3f4d; --line-strong: #6b7280; --text: #f0f1f3; --muted: #9aa0ab;
-  --faint: #5f6675; --accent: #f0f1f3; --accent-hi: #ffffff; --accent-ink: #0e0f13;
-  --danger: #ef6b62; --star-empty: #3a3f4d; --topbar-bg: rgba(14, 15, 19, 0.92);
+  --bg: #111111; --bg-soft: #1a1a1a; --panel: #171717; --panel-2: #202020;
+  --line: #363636; --line-strong: #606060; --text: #f0f1f3; --muted: #999999;
+  --faint: #5f5f5f; --accent: #f0f1f3; --accent-hi: #ffffff; --accent-ink: #111111;
+  --danger: #ef6b62; --star-empty: #363636; --topbar-bg: rgba(17, 17, 17, 0.92);
 }
 [data-theme="a24"][data-mode="dark"] .topbar,
 [data-theme="a24"][data-mode="dark"] .film-banner,
