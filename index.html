@@ -84,6 +84,11 @@
         </div>
       </div>
       <p id="landing-error" class="error center"></p>
+      <div id="install-hint" class="install-hint hidden" role="note">
+        <span id="install-hint-text"></span>
+        <span class="muted"> Updates apply automatically — close and reopen the app if something looks off after an update.</span>
+        <button id="install-dismiss" class="install-dismiss" aria-label="Dismiss">&times;</button>
+      </div>
       <footer class="site-footer center small muted">
         <p><a href="support/">Support CineClub</a> &middot; <a href="privacy.html">Privacy</a> &middot; <a href="terms.html">Terms</a></p>
       </footer>
@@ -183,6 +188,27 @@
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
       window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
     }
+  </script>
+  <script>
+    // Show a one-time install hint on mobile when the app isn't already installed.
+    (function () {
+      var hint = document.getElementById("install-hint");
+      if (!hint) return;
+      if (window.matchMedia("(display-mode: standalone)").matches || navigator.standalone) return;
+      if (localStorage.getItem("cineclub_install_dismissed")) return;
+      var ua = navigator.userAgent;
+      var isIOS = /iphone|ipad|ipod/i.test(ua) && !/crios|fxios/i.test(ua); // Safari only
+      var isAndroid = /android/i.test(ua);
+      if (!isIOS && !isAndroid) return;
+      document.getElementById("install-hint-text").textContent = isIOS
+        ? 'Add to home screen: in Safari tap Share, then "Add to Home Screen".'
+        : 'Add to home screen: in Chrome tap the three-dot menu, then "Add to Home Screen".';
+      hint.classList.remove("hidden");
+      document.getElementById("install-dismiss").addEventListener("click", function () {
+        localStorage.setItem("cineclub_install_dismissed", "1");
+        hint.classList.add("hidden");
+      });
+    })();
   </script>
 </body>
 </html>
