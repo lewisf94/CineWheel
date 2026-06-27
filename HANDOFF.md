@@ -54,7 +54,7 @@ the Pages path changing had no effect on the app.
 2. **Email template still says "cinewheel-79636".** Fix: Firebase → Project Settings → General → **Public-facing name** → set to **CineClub** → Save. (The sign-in-link email isn't a directly-editable template; it uses this name. Sender address stays `@cinewheel-79636.firebaseapp.com` unless you set up custom SMTP.)
 3. **App Check is on.** reCAPTCHA v3 key live in `js/firebase.js`, **enforced for Cloud Firestore**; Authentication is still in **Monitor** (fine to leave, or enforce later once the new domain shows sustained 100% verified). The **API-key HTTP-referrer** restriction is set and includes `thecineclub.co.uk` + `www`. Remaining optional: anonymous-account auto-cleanup (SH-5).
 4. **Email-link sign-in** works and `thecineclub.co.uk` is now in **Authorized domains**. ✅
-5. **Legal pages still have a placeholder.** `privacy.html` + `terms.html` say operated by **[YOUR NAME OR HANDLE]** — pick a real name/handle and fill it in. (Contact `hello@thecineclub.co.uk` and governing law *England & Wales* are already set.)
+5. **Legal pages** — operator name set to **Lewis**, contact `hello@thecineclub.co.uk`, governing law *England & Wales*. ✅
 6. **Confirm `hello@thecineclub.co.uk` forwarding delivers.** The legal pages point users there — send a test email and check it lands in the Gmail inbox (Fasthosts free forward → `hellocineclub@gmail.com`).
 
 ## Still open / next candidates (details in ROADMAP.md)
