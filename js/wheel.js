@@ -164,7 +164,7 @@ function drawWheel(ctx, size, segments, rotation, highlightIndex) {
   const n = segments.length;
   const cx = size / 2, cy = size / 2;
   const rOuter = size / 2 - 6;
-  const band = Math.max(16, size * 0.05);
+  const band = Math.max(13, size * 0.04);
   const rSeg = rOuter - band;        // the segmented disc sits inside the reel rim
   const bg = pageBg();
   const seg = (2 * Math.PI) / n;
@@ -259,7 +259,7 @@ export function renderIdleWheel(canvas, movies) {
     ctx.clearRect(0, 0, size, size);
     const cx = size / 2, cy = size / 2;
     const rOuter = size / 2 - 6;
-    const rSeg = rOuter - Math.max(16, size * 0.05);
+    const rSeg = rOuter - Math.max(13, size * 0.04);
     const bg = pageBg();
     ctx.fillStyle = s.emptyFill;
     ctx.beginPath();

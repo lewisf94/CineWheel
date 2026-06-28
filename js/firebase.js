@@ -77,23 +77,34 @@ export const isConfigured =
 let app, auth, db;
 if (isConfigured) {
   app = initializeApp(firebaseConfig);
-  enableAppCheck(app);
+  // Initialise App Check BEFORE auth/Firestore are created, so the very first
+  // anonymous sign-in and Firestore reads already carry an App Check token.
+  // (Firing them first sends those requests out unverified — which inflated the
+  // "invalid" App Check metrics, and would be rejected outright once App Check
+  // is enforced.) Top-level await is fine here: this is an ES module, and the
+  // whole app can't do anything before auth anyway.
+  await enableAppCheck(app);
   auth = getAuth(app);
   db = getFirestore(app);
 }
 
 // App Check is opt-in: only when a site key is set do we lazy-load its SDK and
 // initialise it, so the default build pays nothing for a feature that's off.
-function enableAppCheck(firebaseApp) {
+// Always resolves (never rejects): a failed load must not break boot — requests
+// then just go out unverified, exactly as they did before App Check was enabled.
+async function enableAppCheck(firebaseApp) {
   if (!recaptchaV3SiteKey) return;
-  import("https://www.gstatic.com/firebasejs/12.15.0/firebase-app-check.js")
-    .then(({ initializeAppCheck, ReCaptchaV3Provider }) =>
-      initializeAppCheck(firebaseApp, {
-        provider: new ReCaptchaV3Provider(recaptchaV3SiteKey),
-        isTokenAutoRefreshEnabled: true,
-      })
-    )
-    .catch((e) => console.error("App Check failed to initialise:", e));
+  try {
+    const { initializeAppCheck, ReCaptchaV3Provider } = await import(
+      "https://www.gstatic.com/firebasejs/12.15.0/firebase-app-check.js"
+    );
+    initializeAppCheck(firebaseApp, {
+      provider: new ReCaptchaV3Provider(recaptchaV3SiteKey),
+      isTokenAutoRefreshEnabled: true,
+    });
+  } catch (e) {
+    console.error("App Check failed to initialise:", e);
+  }
 }
 
 // ---- optional server-authoritative mode (Cloud Functions) ------------------
