@@ -657,10 +657,10 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
 /* ===========================================================================
    Mobile / responsive — sits last so it applies across every theme
    =========================================================================== */
-@media (max-width: 640px) {
-  .topbar { flex-wrap: wrap; padding: 10px 14px; gap: 8px 10px; }
-  .brand { font-size: 1.15rem; }
-  .chip { padding: 6px 10px; font-size: 0.78rem; }
+
+/* Nav collapses to a dropdown at 1000px (where chips start getting cut off) */
+@media (max-width: 1000px) {
+  .topbar { flex-wrap: wrap; }
   .copy-label { display: none; }
   .group-name { max-width: 50vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -679,6 +679,12 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
   .topbar-right.open { display: flex; }
   .topbar-right .chip { width: 100%; text-align: left; }
   .topbar-right #who-am-i { max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+@media (max-width: 640px) {
+  .topbar { padding: 10px 14px; gap: 8px 10px; }
+  .brand { font-size: 1.15rem; }
+  .chip { padding: 6px 10px; font-size: 0.78rem; }
 
   #main { padding: 24px 14px 64px; }
   .card { padding: 17px; }
