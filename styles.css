@@ -30,7 +30,7 @@ a { color: var(--accent); text-underline-offset: 2px; }
 /* Backend-trouble banner (over free quota / unreachable / App Check block). */
 .conn-banner { margin-bottom: 18px; padding: 14px 18px; border: 1px solid var(--danger); border-radius: var(--radius); background: var(--panel); color: var(--text); text-align: center; font-size: 0.95rem; line-height: 1.5; }
 /* Landing footer (support link + legal links) */
-.site-footer { margin-top: 32px; }
+.site-footer { margin-top: 64px; padding-bottom: 24px; }
 .site-footer p { margin: 6px 0; }
 /* Install-to-home-screen hint (mobile only, dismissable) */
 .install-hint { position: relative; margin: 20px 0 0; padding: 11px 40px 11px 14px; background: var(--bg-soft); border: 1px solid var(--line); border-radius: var(--radius); font-size: 0.85rem; line-height: 1.5; text-align: left; }
