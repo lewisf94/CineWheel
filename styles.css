@@ -221,6 +221,8 @@ a:focus-visible, input:focus-visible, textarea:focus-visible,
 /* TMDB brand guidelines forbid altering the logo's colour — keep it at full
    opacity and its native aspect ratio (height set, width auto). */
 .tmdb-logo { height: 16px; width: auto; vertical-align: middle; }
+/* A touch larger on the About/Credits page where it's the primary attribution. */
+.about-tmdb-logo { height: 22px; }
 .import-row { margin: 8px 0 0; }
 .lb-help { margin: 6px 0 0; }
 .lb-help summary { cursor: pointer; color: var(--accent); text-decoration: underline; text-underline-offset: 2px; width: fit-content; }
