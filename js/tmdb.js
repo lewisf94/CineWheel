@@ -22,7 +22,7 @@ const IMG = "https://image.tmdb.org/t/p/";
 
 export const tmdbEnabled = !!TMDB_API_KEY;
 export const TMDB_STATEMENT =
-  "This product uses the TMDB API but is not endorsed or certified by TMDB.";
+  "This product uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.";
 
 // Stable TMDB movie-genre ids, so search results (which carry only ids) can show
 // names without an extra request.

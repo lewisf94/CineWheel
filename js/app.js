@@ -11,7 +11,7 @@ import {
   createGroup, joinGroup, currentSpinnerId, normaliseCode,
   requestReset, approveReset, cancelReset, performReset, setMyServices, kickMember, setStreamFilter, setWheelCap,
 } from "./groups.js";
-import { addMovie, removeMovie, commitSpin, markWatchedAck, finalizeRound, setDeadline, setMovieServices, voteRemoveMovie, postComment, deleteComment, startVote, submitBallot, cancelVote, commitVoteWinner } from "./movies.js";
+import { addMovie, removeMovie, commitSpin, markWatchedAck, finalizeRound, setDeadline, setMovieServices, voteRemoveMovie, postComment, deleteComment, startVote, submitBallot, cancelVote, commitVoteWinner, refreshMovieTmdbMeta } from "./movies.js";
 import {
   renderIdleWheel, chooseWinnerIndex, maybePlaySpin, setMuted, isMuted, resumeAudio,
 } from "./wheel.js";
@@ -70,6 +70,10 @@ const FALLBACK_MS = 4000;
 // When the club opts to cap the wheel, show at most this many films (the oldest
 // on the wheel) so a big list stays readable. Toggleable per club; see renderWheelTab.
 const WHEEL_CAP = 20;
+// TMDB terms prohibit caching their data for more than 6 months. We store
+// tmdbFetchedAt when metadata is saved, then refresh stale docs in the background.
+const TMDB_CACHE_MS = 6 * 30 * 24 * 60 * 60 * 1000; // 6 months
+let tmdbRefreshDone = false; // run once per session, not on every render
 
 // ---- boot ------------------------------------------------------------------
 async function init() {
@@ -453,6 +457,7 @@ function showLanding() {
 }
 
 function attachGroup(code) {
+  tmdbRefreshDone = false; // reset so a fresh session check runs for this group
   state.code = code;
   ejecting = false;
   setLastGroup(code);
@@ -592,6 +597,7 @@ function subscribe(code) {
     onSnapshot(collection(db, "groups", code, "movies"), (snap) => {
       state.movies = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       scheduleRender();
+      refreshStaleTmdbMetadata(); // fire-and-forget; guarded by tmdbRefreshDone
     }, onSubErr)
   );
   state.unsub.push(
@@ -1193,8 +1199,11 @@ function renderMoviesTab() {
         </ol>
         <p class="lb-tip">Stuck on &ldquo;waiting for download&rdquo;? It's a Letterboxd quirk — try a desktop browser (Chrome/Firefox), turn off ad-blockers/extensions for the site and don't use private mode, then check your Downloads folder.</p>
       </details>
-      ${tmdbEnabled ? `<p class="tmdb-attribution muted small">${esc(TMDB_STATEMENT)}
-        <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a></p>` : ""}
+      ${tmdbEnabled ? `<p class="tmdb-attribution muted small">
+        <a href="https://www.themoviedb.org" target="_blank" rel="noopener" aria-label="The Movie Database">
+          <img src="assets/tmdb-logo.svg" alt="TMDB" class="tmdb-logo" />
+        </a>
+        ${esc(TMDB_STATEMENT)}</p>` : ""}
     </div>
     <div class="card">
       <h3>On the wheel <span class="muted">(${movies.length})</span></h3>
@@ -1370,6 +1379,23 @@ async function renderRecommendations(base) {
       await addMovie(state.code, r.title, details || r);
     })
   );
+}
+
+// Background refresh of TMDB metadata older than 6 months (TMDB terms §1.C).
+// Runs once per session after the group loads; silently skips on any error.
+async function refreshStaleTmdbMetadata() {
+  if (!tmdbEnabled || tmdbRefreshDone || !state.code) return;
+  tmdbRefreshDone = true;
+  const now = Date.now();
+  const stale = state.movies.filter((m) =>
+    m.tmdbId && (!m.tmdbFetchedAt || now - ms(m.tmdbFetchedAt, 0) > TMDB_CACHE_MS)
+  ).slice(0, 5); // cap at 5 per session to stay well within rate limits
+  for (const movie of stale) {
+    try {
+      const fresh = await getDetails(movie.tmdbId);
+      if (fresh) await refreshMovieTmdbMeta(state.code, movie.id, fresh);
+    } catch (_) {}
+  }
 }
 
 // Personalised recs for the stats tab: fetch suggestions based on the current
