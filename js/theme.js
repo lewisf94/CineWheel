@@ -50,8 +50,12 @@ function paintMeta() {
   paintFavicon();
 }
 
-// Swap the tab favicon + apple-touch-icon between the light/dark PNG variants
-// to match the app's own light/dark mode (not just OS colour-scheme).
+// Swap the tab favicon + apple-touch-icon link between the light/dark PNG
+// variants to match the app's own light/dark mode (not just OS colour-scheme).
+// Note: this only affects the live Safari tab icon. An icon already added to
+// an iOS home screen is a static snapshot taken at "Add to Home Screen" time —
+// iOS never re-fetches apple-touch-icon afterwards, so an existing home-screen
+// icon won't update; the user has to remove and re-add it to pick up a change.
 function paintFavicon() {
   const dark = isDarkMode();
   document.querySelectorAll("link[data-adaptive-icon]").forEach((link) => {
