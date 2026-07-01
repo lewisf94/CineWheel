@@ -4,13 +4,15 @@
 // pass straight through to the network (never cached or intercepted), so the
 // realtime sync is unaffected. Bump CACHE to force clients off old assets.
 // --------------------------------------------------------------------------
-const CACHE = "cineclub-v2";
+const CACHE = "cineclub-v3";
 const SHELL = [
   "./", "./index.html", "./styles.css", "./manifest.webmanifest",
   "./js/app.js", "./js/firebase.js", "./js/session.js", "./js/groups.js",
   "./js/movies.js", "./js/ratings.js", "./js/wheel.js", "./js/stats.js",
   "./js/tmdb.js", "./js/theme.js", "./js/push.js",
-  "./assets/favicon.svg", "./assets/icon-192.png", "./assets/icon-512.png", "./assets/icon-180.png",
+  "./assets/favicon.svg",
+  "./assets/icon-180.png", "./assets/icon-192.png", "./assets/icon-512.png",
+  "./assets/icon-dark-180.png", "./assets/icon-dark-192.png", "./assets/icon-dark-512.png",
 ];
 
 self.addEventListener("install", (event) => {

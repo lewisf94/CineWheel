@@ -47,6 +47,17 @@ function paintMeta() {
   const meta = document.querySelector('meta[name="theme-color"]');
   const t = THEMES.find((x) => x.id === curTheme());
   if (meta && t) meta.setAttribute("content", isDarkMode() ? (t.darkBg || "#0e0f13") : t.bg);
+  paintFavicon();
+}
+
+// Swap the tab favicon + apple-touch-icon between the light/dark PNG variants
+// to match the app's own light/dark mode (not just OS colour-scheme).
+function paintFavicon() {
+  const dark = isDarkMode();
+  document.querySelectorAll("link[data-adaptive-icon]").forEach((link) => {
+    const light = link.getAttribute("href").replace("icon-dark-", "icon-");
+    link.setAttribute("href", dark ? light.replace("icon-", "icon-dark-") : light);
+  });
 }
 
 function apply(id) {
